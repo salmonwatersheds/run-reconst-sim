@@ -1,7 +1,6 @@
 # Evaluating the consequences of assumptions in run-reconstructions when assessing the biological status of salmon
-## R code for model simulations
-### Stephanie J. Peacock <stephanie.j.peacock@gmail.com>
-### December 21, 2018
+#### Stephanie J. Peacock <stephanie.j.peacock@gmail.com>
+#### December 21, 2018
 
 This repo contains R code related to the PSF project "Evaluating the consequences of assumptions in run-reconstructions when assessing the biological status of salmon"
 
