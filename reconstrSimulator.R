@@ -209,6 +209,16 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 		nrow = nYears, ncol = nPop)
 	
 	#_____
+	# Apply monitoring design (random sampling of propSampled each year)
+	z <- samplingDesign(ppnSampled = simPar$ppnSampled, nPop, nYears,
+														ppnChange = simPar$ppnChange, 
+														samplingDeclStart = simPar$samplingDeclStart,
+														samplingDeclEnd = simPar$samplingDeclEnd,
+														gen = simPar$gen)
+	
+	sampledSpawners <- z * obsSpawners # 0 = not monitored
+	
+	#_____
 	# Add error to observed catch for CU
 	# ** If adding bias in catch, this is where you'd put it **
 	obsCatch <- trueCatch * exp(qnorm(runif(nYears, 0.0001, 0.9999), 
@@ -224,21 +234,13 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 		omega = simPar$obsAgeErr, 
 		nYears = 1) 
 	
-	#_____
-	# Apply monitoring design (random sampling of propSampled each year)
-	
-	sampled <- samplingDesign(ppnSampled = simPar$ppnSampled, nPop, nYears,
-														ppnChange = simPar$ppnChange, 
-														samplingDeclStart = simPar$samplingDeclStart,
-														samplingDeclEnd = simPar$samplingDeclEnd,
-														gen = simPar$gen)
-	
-	#_____
-	
-	
 	#-----------------------------------------------------------------------------
 	# Assessment submodel
 	#-----------------------------------------------------------------------------
+	
+	#_____
+	# EXPANSION FACTORS
+	
 	
 	return()
 	
