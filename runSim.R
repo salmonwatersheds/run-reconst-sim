@@ -3,6 +3,7 @@ library(here)
 
 source("populationSubmodFns.R")
 source("obsSubmodFns.R")
+source("expansionFactors.R")
 
 
 plot(1:nYears, spawners[, 1], "n", ylim=range(spawners))

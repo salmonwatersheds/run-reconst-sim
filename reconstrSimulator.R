@@ -94,7 +94,8 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	
 	# Unpack parameters referred to often
 	nPop <- simPar$nPop
-	nYears <- (simPar$gen + 2) + simPar$simYears
+	simYears <- simPar$simYears
+	nYears <- (simPar$gen + 2) + simYears
 	ages <- 2:6
 	
 	#_____
@@ -199,18 +200,19 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	#-----------------------------------------------------------------------------
 	# Observation submodel
 	#-----------------------------------------------------------------------------
+	# Observations only made over simYears, not initialization
 	
 	#_____
 	# Add lognormal observation error to all spawners
-	obsSpawners <- spawners * matrix(exp(
-		qnorm(runif(nYears*nPop, 0.0001, 0.9999), 
+	obsSpawners <- spawners[(simPar$gen + 3):nYears, ] * matrix(exp(
+		qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
 					0, # -simPar$sigma_obs^2 / 2, # Change this to zero???
 					simPar$sigma_obs)), 
-		nrow = nYears, ncol = nPop)
+		nrow = simYears, ncol = nPop)
 	
 	#_____
 	# Apply monitoring design (random sampling of propSampled each year)
-	z <- samplingDesign(ppnSampled = simPar$ppnSampled, nPop, nYears,
+	z <- samplingDesign(ppnSampled = simPar$ppnSampled, nPop, simYears,
 														ppnChange = simPar$ppnChange, 
 														samplingDeclStart = simPar$samplingDeclStart,
 														samplingDeclEnd = simPar$samplingDeclEnd,
@@ -221,7 +223,7 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	#_____
 	# Add error to observed catch for CU
 	# ** If adding bias in catch, this is where you'd put it **
-	obsCatch <- trueCatch * exp(qnorm(runif(nYears, 0.0001, 0.9999), 
+	obsCatch <- trueCatch[(simPar$gen + 3):nYears] * exp(qnorm(runif(simYears, 0.0001, 0.9999), 
 					0, #-simPar$sigma_obs^2 / 2, # Change this to zero???
 					simPar$sigma_catch))
 	
@@ -241,7 +243,17 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	#_____
 	# EXPANSION FACTORS
 	
+	dumExp1 <- ExpFactor1(sampledSpawners = sampledSpawners[, 1:simPar$nIndicator])
+	spawnersExp1 <- dumExp1[[1]] * apply(sampledSpawners, 1, sum)
 	
+	dumExp2 <- ExpFactor2(
+		spawnersInd = sampledSpawners[, 1:simPar$nIndicator], 
+		spawnersNonInd = sampledSpawners[, (simPar$nIndicator + 1):simPar$nPop])
+	
+	spawnersExp2 <- dumExp2[[1]] * spawnersExp1
+	
+	spawnersExp3 <- 
+		
 	return()
 	
 } # end recoverySim function
