@@ -200,7 +200,7 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	#-----------------------------------------------------------------------------
 	# Observation submodel
 	#-----------------------------------------------------------------------------
-	# Observations only made over simYears, not initialization
+	# Observations only made over all years including initialization
 	
 	#_____
 	# Add lognormal observation error to all spawners
@@ -241,19 +241,52 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	#-----------------------------------------------------------------------------
 	
 	#_____
-	# EXPANSION FACTORS
+	# Expansion Factors to calculate total spawners
 	
+	# Expansion Factor I to account for indicator streams not monitored
 	dumExp1 <- ExpFactor1(sampledSpawners = sampledSpawners[, 1:simPar$nIndicator])
-	spawnersExp1 <- dumExp1[[1]] * apply(sampledSpawners, 1, sum)
+	spawnersExp1 <- dumExp1[[1]] * apply(sampledSpawners[, 1:simPar$nIndicator], 1, sum)
 	
+	# Expansion Factor II to account for non-indicator streams
 	dumExp2 <- ExpFactor2(
 		spawnersInd = sampledSpawners[, 1:simPar$nIndicator], 
 		spawnersNonInd = sampledSpawners[, (simPar$nIndicator + 1):simPar$nPop])
-	
 	spawnersExp2 <- dumExp2[[1]] * spawnersExp1
 	
-	spawnersExp3 <- 
-		
+	# Expansion Factor II to account for observer efficiency
+	# spawnersExp3 <- simPar$ExpFactor3 * spawnersExp2
+	spawnersExp3 <- 1 * spawnersExp2
+	
+	#_____
+	# Reconstructing recruitment
+	# Observed returns based on total spawners and obsCatch
+	obsReturn <- obsCatch + spawnersExp3
+	
+	# Observed recruits by brood year
+	# Note: included the obsPpnAge!=0 so that NAs aren't produced when we're 
+	# missing, e.g., age 6 returns
+	recruitsShifted <- matrix(unlist(shift(x = obsReturn, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(obsAges))
+	obsRecruitsBY <-  recruitsShifted %*% obsPpnAge[obsPpnAge!=0]
+
+	# Sanity check: Does the fancy matrix jiggery pokery work?
+	# obsReturn[4] * obsPpnAge[2] + obsReturn[5] * obsPpnAge[3] + obsReturn[6] * obsPpnAge[4]
+	# obsRecruitsBY[1]
+	
+	
+	#_____
+	# Benchmarks
+	
+	# Reconstructed run (rr) to estimate Ricker a and b parameters:
+	rr <- data.frame(x = spawnersExp3, y = log(obsRecruitsBY/spawnersExp3)) 
+	# plot(rr$x, rr$y)
+	
+	fit <- lm(y ~ x, data = rr)
+	theta <- c(a = as.numeric(fit$coefficients[1]),
+						 b = - as.numeric(fit$coefficients[2]),
+						 sig = as.numeric(summary(fit)$sigma))
+	
+	benchSR <- c(upper = calcSmsy(a = theta[1], b = theta[2]))
+	
 	return()
 	
 } # end recoverySim function

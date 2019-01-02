@@ -6,7 +6,10 @@ Stephanie Peacock
 Model overview
 --------------
 
-This repo contains code that runs a stochastic simulation model of salmon population dynamics, allowing control over various biological and management factors that may influence the accuracy of status assessments. This model will be based on previous studies by Carrie Holt and colleagues (e.g., [Holt and Folkes 2015](http://dx.doi.org/10.1016/j.fishres.2015.01.002), Holt et al. 2018) that developed a simulation model comprised of sub-models for salmon population dynamics, observation of spawners, assessment, harvest, and performance (Fig. 1).
+Model overview
+--------------
+
+This code simulates a stochastic model of salmon population dynamics, allowing control over various biological and management factors that may influence the accuracy of status assessments. This model will be based on previous studies by Carrie Holt and colleagues (e.g., [Holt and Folkes 2015](http://dx.doi.org/10.1016/j.fishres.2015.01.002), Holt et al. 2018) that developed a simulation model comprised of sub-models for salmon population dynamics, observation of spawners, assessment, harvest, and performance (Fig. 1).
 
 ![Fig. 1. Schematic of the simulation model, including sub-models for population dynamics, harvest, observation, assessment, and performance. The entire process will be repeated for different autocorrelation in residuals among sub-populations, inter-annual variability in age-at-return, bias in harvest, and observation errors (see research questions, above). Adapted from [Holt et al. (2016)](https://www.psc.org/fund-project/adapting-benchmarks/).](model.png)
 

@@ -72,7 +72,7 @@ refDecade <- function(sampledSpawners, years = 1960:2009, legacy = FALSE){
 		} # end Non-Legacy mode
 	} # end insufficient info
 
-	return(ref.decade)
+	return(list(ref = ref.decade, decadesFactor = decadesFactor, decades = decades))
 	
 } # end refDecade function
 
@@ -250,7 +250,9 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 	# Step 1: Determine suitable reference decade for each year
 	# ----------------------------------------------------------------------------
 	
-	ref.decade <- refDecade(sampledSpawners = sampledSpawners, years = years, legacy = legacy)
+	decadeDummy <- refDecade(sampledSpawners = sampledSpawners, years = years, legacy = legacy)
+	ref.decade <- decadeDummy$ref
+	decadesFactor <- decadeDummy$decadesFactor
 
 	# ----------------------------------------------------------------------------
 	# Step 2: Calculate proportional contribution (P) of each indicator stream
@@ -374,7 +376,9 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	# monitored at least once, or a reference decade as determined by refDecade()
 	# ----------------------------------------------------------------------------
 	
-	ref.decade <- refDecade(sampledSpawners = spawnersInd, years = years, legacy = legacy)
+	decadeDummy <- refDecade(sampledSpawners = sampledSpawners, years = years, legacy = legacy)
+	ref.decade <- decadeDummy$ref
+	decadesFactor <- decadeDummy$decadesFactor
 	
 	# ----------------------------------------------------------------------------
 	# Step 2: Calculate average escapement to streams per decade and Expansion 
