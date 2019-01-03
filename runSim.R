@@ -6,6 +6,7 @@ library(gsl) # for lambert_W0 function
 source("populationSubmodFns.R")
 source("obsSubmodFns.R")
 source("expansionFactors.R")
+source("benchmarkFns.R")
 
 
 plot(1:nYears, spawners[, 1], "n", ylim=range(spawners))
@@ -43,3 +44,9 @@ lines(1:simYears, apply(spawners[(simPar$gen + 3):nYears, 1:simPar$nIndicator], 
 points(1:simYears, spawnersExp2, pch = 19, cex = 0.8)
 
 lines(1:simYears, spawnersExp3, col=3)
+
+
+plot(1:simYears, spawnersExp3, "o")
+abline(h=quantile(spawnersExp3, c(0.25, 0.75)), col=c(2,3))
+points(simYears, spawnersExp3[simYears], col=2, pch=19, cex=0.5)
+abline(h=c(Sgen1, Smsy), lty=2, col=c(2,3))

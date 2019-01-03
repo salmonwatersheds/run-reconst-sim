@@ -1,4 +1,4 @@
-#' Recovery simulator
+#' Run-reconstruction simulator
 #'
 #' Closed-loop simulation tool to assess management procedures and inform
 #' Pacific salmon rebuilding strategies. Based on C. Holt's south coast chum 
@@ -80,7 +80,7 @@ simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
 set.seed(987)
 a <- rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)
 
-recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
+reconstrSim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 												dirName, uniqueProd=TRUE, seed = NULL) {
 	
 	# If a seed for simulation is provided, then set the seed for the simulation here
@@ -265,27 +265,25 @@ recoverySim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	# Observed recruits by brood year
 	# Note: included the obsPpnAge!=0 so that NAs aren't produced when we're 
 	# missing, e.g., age 6 returns
-	recruitsShifted <- matrix(unlist(shift(x = obsReturn, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(obsAges))
+	recruitsShifted <- matrix(unlist(shift(x = obsReturn, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(ages[obsPpnAge!=0]))
 	obsRecruitsBY <-  recruitsShifted %*% obsPpnAge[obsPpnAge!=0]
 
 	# Sanity check: Does the fancy matrix jiggery pokery work?
 	# obsReturn[4] * obsPpnAge[2] + obsReturn[5] * obsPpnAge[3] + obsReturn[6] * obsPpnAge[4]
 	# obsRecruitsBY[1]
 	
+	#_____
+	# Benchmarks: observed
+	
+	obsData <- data.frame(S = spawnersExp3, R = obsRecruitsBY)
+	obsStatus <- assessPop(SR.pairs = obsData, gen = simPar$gen)
 	
 	#_____
-	# Benchmarks
+	# Benchmarks: true
+	trueData <- data.frame(S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
+	trueStatus <- assessPop(SR.pairs = trueData, gen = simPar$gen)
 	
-	# Reconstructed run (rr) to estimate Ricker a and b parameters:
-	rr <- data.frame(x = spawnersExp3, y = log(obsRecruitsBY/spawnersExp3)) 
-	# plot(rr$x, rr$y)
 	
-	fit <- lm(y ~ x, data = rr)
-	theta <- c(a = as.numeric(fit$coefficients[1]),
-						 b = - as.numeric(fit$coefficients[2]),
-						 sig = as.numeric(summary(fit)$sigma))
-	
-	benchSR <- c(upper = calcSmsy(a = theta[1], b = theta[2]))
 	
 	return()
 	
