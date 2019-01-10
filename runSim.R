@@ -7,6 +7,19 @@ source("populationSubmodFns.R")
 source("obsSubmodFns.R")
 source("expansionFactors.R")
 source("benchmarkFns.R")
+source("performanceFns.R")
+source("reconstrSimulator.R")
+
+source("plottingFns.R")
+
+#Temporary inputs
+# here <- here::here
+simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
+# cuCustomCorrMat <- read.csv(here("data/baseCorrMatrix.csv"), stringsAsFactors=F)
+
+set.seed(987)
+a <- rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)
+
 
 
 plot(1:nYears, spawners[, 1], "n", ylim=range(spawners))
@@ -50,3 +63,30 @@ plot(1:simYears, spawnersExp3, "o")
 abline(h=quantile(spawnersExp3, c(0.25, 0.75)), col=c(2,3))
 points(simYears, spawnersExp3[simYears], col=2, pch=19, cex=0.5)
 abline(h=c(Sgen1, Smsy), lty=2, col=c(2,3))
+
+# Use whole function
+nSim <- 1000
+SRBias <- matrix(NA, nrow = nSim, ncol = 2)
+percBias <- matrix(NA, nrow = nSim, ncol = 2)
+SRStatus <- numeric(nSim)
+percStatus <- numeric(nSim)
+
+for(i in 1:nSim){
+	out <- reconstrSim(simPar, a)
+	SRBias[i, ] <- out$performance$benchBias['SR', ]
+	percBias[i, ] <- out$performance$benchBias['perc', ]
+	SRStatus[i] <- out$performance$statusDiff[1]
+	percStatus[i] <- out$performance$statusDiff[2]
+}
+
+par(mfrow=c(1,2))
+plotStatusDiff(SRStatus); mtext(side=3, "Stock-recruit metric")
+plotStatusDiff(percStatus); mtext(side=3, "Percentile metric")
+
+length(which(SRStatus>=4))/nSim
+length(which(percStatus>=4))/nSim
+
+apply(SRBias, 2, mean)
+apply(percBias, 2, mean)
+apply(abs(SRBias), 2, mean)
+apply(abs(percBias), 2, mean)

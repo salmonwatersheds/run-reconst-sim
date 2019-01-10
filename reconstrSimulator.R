@@ -72,16 +72,9 @@
 #' @return TO BE DEFINED.
 #' @export
 
-#Temporary inputs
-# here <- here::here
-simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
-# cuCustomCorrMat <- read.csv(here("data/baseCorrMatrix.csv"), stringsAsFactors=F)
 
-set.seed(987)
-a <- rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)
-
-reconstrSim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
-												dirName, uniqueProd=TRUE, seed = NULL) {
+reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
+												dirName = NULL, uniqueProd=TRUE, seed = NULL) {
 	
 	# If a seed for simulation is provided, then set the seed for the simulation here
 	if(length(seed) == 1){ 
@@ -274,7 +267,6 @@ reconstrSim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	
 	#_____
 	# Benchmarks: observed
-	
 	obsData <- data.frame(S = spawnersExp3, R = obsRecruitsBY)
 	obsStatus <- assessPop(SR.pairs = obsData, gen = simPar$gen)
 	
@@ -283,8 +275,20 @@ reconstrSim <- function(simPar, ricker_a = a, cuCustomCorrMat=NULL,
 	trueData <- data.frame(S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
 	trueStatus <- assessPop(SR.pairs = trueData, gen = simPar$gen)
 	
+	#-----------------------------------------------------------------------------
+	# Performance
+	#-----------------------------------------------------------------------------
 	
+	P <- perfStatus(trueStatus, obsStatus)
 	
-	return()
+	#-----------------------------------------------------------------------------
+	# END
+	#-----------------------------------------------------------------------------
+	
+	return(list(
+		performance = P, 
+		status = list(obsStatus, trueStatus),
+		data = list(obsData, trueData)
+	))
 	
 } # end recoverySim function

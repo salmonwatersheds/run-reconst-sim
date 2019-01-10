@@ -376,7 +376,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	# monitored at least once, or a reference decade as determined by refDecade()
 	# ----------------------------------------------------------------------------
 	
-	decadeDummy <- refDecade(sampledSpawners = sampledSpawners, years = years, legacy = legacy)
+	decadeDummy <- refDecade(sampledSpawners = spawnersInd, years = years, legacy = legacy)
 	ref.decade <- decadeDummy$ref
 	decadesFactor <- decadeDummy$decadesFactor
 	

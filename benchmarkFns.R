@@ -120,6 +120,10 @@ calcSgen <- function(Sgen.hat, theta, Smsy) {
 
 assessMetric <- function(current, lower, upper) {
 	
+	if(is.na(current) == TRUE) stop("Current abundance NA")
+	if(is.na(lower) == TRUE) stop("Lower benchmark NA")
+	if(is.na(upper) == TRUE) stop("Upper benchmark NA")
+	
 	if(length(lower) != length(upper)) stop("Lower and upper benchmarks must be of the same length")
 	
 	# If just a single benchmark is given (no CI):

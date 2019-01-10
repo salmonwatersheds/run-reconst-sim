@@ -46,14 +46,20 @@ The functions called by `reconstrSim` that comprise the simulation model are org
     -   `samplingDesign` that simulates the partial monitoring of indicator and non-indicator streams within the CU, with the option of incorporating change in monitoring effort over time
 -   `expansionFactors.R` contains functions
     -   `refDecade` that selects a reference decade from which to calculate relevant expansion factors (as per `ExpFactor1RefDecade` from the NCCSDB packaage)
-    -   `ExpFactor1` calculates the value of Expansion Factor 1 for each year and decade
-    -   `ExpFactor2` calculates the value of Expansion Factor 2 for each decade
+    -   `ExpFactor1` that calculates the value of Expansion Factor 1 for each year and decade
+    -   `ExpFactor2` that calculates the value of Expansion Factor 2 for each decade
 -   `benchmarkFns.R` contains functions
-    -   `calcSmsy` calculates *S*<sub>*M**S**Y*</sub> (i.e., upper SR benchmark) given Ricker parameters, using the explicit solution from Scheuerell (2016)
-    -   `Sgen.optim` calculates the likelihood of residuals between the projected recruits from an estimated *S*<sub>*G**E**N*1</sub> (`Sgen.hat`) and a known value of *S*<sub>*M**S**Y*</sub>, to be used in the optimization of *S*<sub>*G**E**N*1</sub>.
-    -   `calcSgen` calculates *S*<sub>*G**E**N*1</sub> by optimizing `Sgen.optim`
-    -   `assessMetric` returns the status given current abundance and upper and lower benchmarks on a given metric
-    -   `assessPop` returns a population assessment based on both SR and percentile metrics of spawners abundance, to be applied to either observed or true spawners and recruits
+    -   `calcSmsy` that calculates *S*<sub>*M**S**Y*</sub> (i.e., upper SR benchmark) given Ricker parameters, using the explicit solution from Scheuerell (2016)
+    -   `Sgen.optim` that calculates the likelihood of residuals between the projected recruits from an estimated *S*<sub>*G**E**N*1</sub> (`Sgen.hat`) and a known value of *S*<sub>*M**S**Y*</sub>, to be used in the optimization of *S*<sub>*G**E**N*1</sub>.
+    -   `calcSgen` that calculates *S*<sub>*G**E**N*1</sub> by optimizing `Sgen.optim`
+    -   `assessMetric` that returns the status given current abundance and upper and lower benchmarks on a given metric
+    -   `assessPop` that returns a population assessment based on both SR and percentile metrics of spawners abundance, to be applied to either observed or true spawners and recruits
+-   `performanceFns.R` contains function
+    -   `perfStatus` that takes the true and observed status output from `assessPop` and returns the bias (raw mean error) in benchmarks (observed - true) and the status code 1-9, which tells whether the final status (green (1), amber (2), or red (3)) was the same for true and observed or different, and if they were different, how they differed.
+-   `plottingFns.R` contains functions to plot the output of simulations, including
+    -   `plotStatusDiff` that produces a 3 x 3 matrix plot with the proportion of MCMC simulations giving green, amber, or red status in both true (x-axis) and observed (y-axis) data.
+
+Details of all functions can be found in their respective files.
 
 Model description
 =================
@@ -196,6 +202,44 @@ $$ \\hat{R}\_t = \\hat{C}\_t + S^{'''}\_{t}$$
 
 $$ \\hat{R}^{'}\_{y} = \\hat{R}\_{y+3} \\hat{pr}\_{3} + \\hat{R}\_{y+4} \\hat{pr}\_{4} + \\hat{R}\_{y+5} \\hat{pr}\_{5},$$
 
-yielding the reconstructed spawner-recruitment pairs for brood year *y*: *S*<sub>*y*</sub><sup>‴</sup> and $\\hat{R}^{'}\_{y}$.
+yielding the reconstructed spawner-recruit pairs for brood year *y*: *S*<sub>*y*</sub><sup>‴</sup> (`spawnersExp3`) and $\\hat{R}^{'}\_{y}$ (`obsRecruitsBY`).
 
 ### Calculating benchmarks
+
+Upper and lower benchmarks for the stock-recruit and percentile metrics are calculated from both the reconstructed spawner-recruit pairs (above) and the "true" data. **For now, I am using the full spawner data wihtout observation error (`spawners`) and the true recruits by brood year (`recruitsBY`), removing the first 7 years of initialization, but if one wanted to assess the effect of different expansion factors independently, then other "true" datasets may be used.** These benchmarks are outlined below for completeness, but descriptions can also be found elsewhere (e.g., [Connors et al. 2018](https://salmonwatersheds.ca/library/lib_442/), Holt et al. 2018).
+
+#### Stock-recruit benchmarks
+
+In order to calculate stock-recruit benchmarks, a simplified version of the Ricker model presented above is fit to the data using linear regression to estimate parameters $\\hat{a}$, $\\hat{b}\_{CU}$, and *σ*<sub>*ϵ*</sub> for the CU:
+
+log(*R*<sub>*y*</sub>/*S*<sub>*y*</sub>)=*a* − *b*<sub>*C**U*</sub>*S*<sub>*y*</sub> + *ϵ*<sub>*y*</sub>
+ where *R* is recruitment to the entire CU from brood year *y*, *S*<sub>*y*</sub> is the spawner abundance for the entire CU in year *y*, and *ϵ*<sub>*y*</sub> ∼ *N*(0, *σ*<sub>*ϵ*</sub>) is combined observation and process error. (Density dependence parameter *b*<sub>*C**U*</sub> is used to distinguish from the population-specific parameters *b*<sub>*i*</sub> applied in the population submodel.)
+
+The upper stock-recruit benchmark is *S*<sub>*M**S**Y*</sub>, or the spawner abundance, or the spawner abundance projected to maintain long-term maximum sustainable yield from a population with Ricker dynamics. *S*<sub>*M**S**Y*</sub> is calculated from the estimated Ricker parameters as:
+
+$$S\_{MSY} =  \\frac{1 - W(e^{1 - \\hat{a})}{\\hat{b}\_{CU}}$$
+
+where *W*(*z*) is the Lambert W function [(Scheuerell 2016)](https://peerj.com/articles/1623). We calculate *S*<sub>*M**S**Y*</sub> using the `calcSmsy` function, which draws on the `lambert_W0` function from the `gsl` library [(Hankin 2006)](https://cran.r-project.org/web/packages/gsl/vignettes/gslpaper.pdf).
+
+The lower stock recruit benchmark is *S*<sub>*G**E**N*1</sub>, or the spawner abundances that would result in recovery to *S*<sub>*M**S**Y*</sub> within one generation. There is no explicit solution for *S*<sub>*G**E**N*1</sub>, and so we use numerical optimization (`optimize` in R) to minimize the difference between *S*<sub>*M**S**Y*</sub> above and the projected $\\hat{S}\_{MSY}$ for proposed values of *S*<sub>*G**E**N*1</sub> over the interval (0, *S*<sub>*M**S**Y*</sub>). See `Sgen.optim` and `calcSgen` functions.
+
+#### Percentile benchmarks
+
+The upper and lower benchmarks for the percentile metric are simply the 25% and 75% quantiles of historic spawner abundance (e.g., *S*<sub>*y*</sub><sup>‴</sup> or `spawnersExp3` in the case of observed data), calculated using the `quantile` function.
+
+#### Assessing population status
+
+To assess the population (i.e., CU) as red, amber, or green, the geometric mean spawner abundance over the most recent generation (i.e., 5 years for chum salmon) is compared to the upper and lower benchmarks for each metric using the stoplight approach outlined in Canada's Wild Salmon Policy [(DFO 2005)](https://www.pac.dfo-mpo.gc.ca/fm-gp/species-especes/salmon-saumon/wsp-pss/policy-politique/index-eng.html). In the code, this is done by applying the `assessPop` function to true and observed (i.e., reconstructed) stock-recruit data, yielding the status assessments and benchmark values for true and observed cases.
+
+Performance sub-model
+---------------------
+
+Performance is evluated using two metrics that capture the difference between observed and true status assessments:
+
+1.  Bias (mean raw error; observed - true) and precision (mean absolute error) of derived benchmarks (upper and lower for both percentile and stock-recruitment);
+
+2.  Percentage of simulations where status is erroneously assigned to red, amber, and green status zones. For this performance metric, we distinguish errors in assessment that over- and under-estimate status by assigning the following "status codes" that can be analysed in various ways (Fig. 2).
+
+![Caption](performance.png)
+
+In practice, we are interested in the combined impact of all run-reconstruction assumptions on status assessments, and so observed status will be compared to the true status given perfect knowledge of spawner abundances and true recruitment to the CU. \*\*However, in order to inform future modelling work and/or data collection, we will also separate the relative impact of the different assumptions by comparing observed status to different baselines. For example, in order to isolate the impact of Expansion Factor III for observer efficiency, the observed status can be compared to the status calculated with zero observation error but the same monitoring coverage, harvest rates, and age-at-return assumptions. How to isolate the impact of different assumptions and sources of variability will require careful consideration, and has yet to be implemented in the model\*
