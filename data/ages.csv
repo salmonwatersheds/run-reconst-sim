@@ -1,0 +1,7 @@
+,"c(as.character(datAge$Sp.CU_Name[datAge$HasAgeData == ""Yes""]), ",Age.2,Age.3,Age.4,Age.5,Age.6,Age.7,
+2,CM-Bella Coola River-Late,NA,0.19,0.73,0.08,0.00,0,
+3,CM-Douglas-Gardner,NA,0.20,0.69,0.10,0.00,0,
+5,CM-Hecate Lowlands,NA,0.29,0.65,0.06,0.00,0,
+14,CM-Rivers Inlet,NA,0.00,0.67,0.33,0.00,0,
+17,CM-Smith Inlet,NA,0.46,0.49,0.05,0.00,0,
+6,Average,NA,0.23,0.65,0.13,0.00,0,1

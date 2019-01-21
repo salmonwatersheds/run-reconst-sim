@@ -1,0 +1,127 @@
+﻿ID,Species,Sp-CU_Name,CU,HasAgeData,Age 2,Age 3,Age 4,Age 5,Age 6,Age 7,CUstoUse,CU2
+1,CM,CM-Bella Coola-Dean Rivers,CM_16,No,,,,,,,Area 8,8
+2,CM,CM-Bella Coola River-Late,CM_17,Yes,,0.185904351,0.734627832,0.078029486,0.001438332,0,,
+3,CM,CM-Douglas-Gardner,CM_20,Yes,,0.201514653,0.693447481,0.104050049,0.000987817,0,,
+4,CM,CM-East HG,CM_21,Yes,,0.213582836,0.673657041,0.111469592,0.001290531,0,,
+5,CM,CM-Hecate Lowlands,CM_18,Yes,,0.290926099,0.645151232,0.062675398,0.001247272,0,,
+6,CM,CM-Lower Nass,CM_31,Yes,,0.054726368,0.796019901,0.139303483,0.009950249,0,,
+7,CM,CM-Lower Skeena,CM_27,Yes,,0.142857143,0.857142857,0,0,0,Area 4,4
+8,CM,CM-Middle Skeena,CM_28,Yes,,0.019002375,0.893111639,0.085510689,0.002375297,0,Area 4,4
+9,CM,CM-Mussel-Kynock,CM_19,No,,,,,,,Area 7,7
+10,CM,CM-North Haida Gwaii,CM_24,Yes,,0,0.892857143,0.107142857,0,0,Area 2W,02W
+11,CM,CM-North Haida Gwaii-Stanley Creek,CM_25,No,,,,,,,Area 2W,02W
+12,CM,CM-Portland Canal-Observatory,CM_32,Yes,,0,0.886792453,0.113207547,0,0,CM-Portland Inlet,CM_30
+13,CM,CM-Portland Inlet,CM_30,Yes,,0.14354067,0.693779904,0.157894737,0.004784689,0,,
+14,CM,CM-Rivers Inlet,CM_13,Yes,,0,0.666666667,0.333333333,0,0,Smith Inlet,CM_12
+15,CM,CM-Skeena Estuary,CM_26,No,,,,,,,Area 4,4
+16,CM,CM-Skidegate,CM_22,Yes,,0.054022314,0.75631239,0.186142102,0.003523194,0,,
+17,CM,CM-Smith Inlet,CM_12,Yes,,0.464306442,0.485200232,0.050493326,0,0,,
+18,CM,CM-Spiller-Fitz-Hugh-Burke,CM_15,No,,,,,,,Area 8,8
+19,CM,CM-West Haida Gwaii,CM_23,Yes,,0.08177688,0.695608279,0.211004543,0.011610298,0,,
+20,CN,CN-Bella Coola-Bentinck,CN_39,Yes,,0.088214784,0.337517434,0.510111576,0.063458856,0.00069735,,
+21,CN,CN-Dean River,CN_40,Yes,,0.027633851,0.221070812,0.601036269,0.150259067,0,,
+22,CN,CN-Docee,CN_36,Yes,,0.046153846,0.630769231,0.297435897,0.025641026,0,,
+23,CN,CN-Ecstall,CN_46,No,,,,,,,Lower Skeena,CN_48
+24,CN,CN-Haida Gwaii-North,CN_43,Yes,,0,0.136986301,0.753424658,0.109589041,0,,
+25,CN,CN-Kalum-early timing,CN_49,Yes,,0,0.058103976,0.452599388,0.486238532,0.003058104,Upper Bulkley River,CN_55
+26,CN,CN-Kalum-late timing,CN_50,Yes,,0.025572163,0.108827651,0.38346567,0.470340962,0.011793554,,
+27,CN,CN-Lower Skeena,CN_48,Yes,,0.006410256,0.564102564,0.288461538,0.134615385,0.006410256,Middle Skeena-mainstem tributaries,CN_54
+28,CN,CN-Middle Skeena-large lakes,CN_53,Yes,,0.043180465,0.285288862,0.566408577,0.104228708,0.000893389,,
+29,CN,CN-Middle Skeena-mainstem tributaries,CN_54,Yes,,0.03255814,0.260465116,0.465116279,0.237209302,0.004651163,,
+30,CN,CN-North & Central Coast-early timing,CN_42,Yes,,0.054441261,0.366762178,0.550143266,0.028653295,0,Area 6,6
+31,CN,CN-North & Central Coast-late timing,CN_41,Yes,,0.2,0.2,0.533333333,0.066666667,0,Area 6,6
+32,CN,CN-Portland Sound-Observatory Inlet-Lower Nass,CN_57,Yes,,0.114550129,0.291002571,0.473933162,0.118354756,0.002159383,,
+33,CN,CN-Rivers Inlet,CN_37,Yes,,0.050724638,0.242236025,0.553830228,0.15010352,0.00310559,,
+34,CN,CN-Upper Bulkley River,CN_55,Yes,,0.020637899,0.159474672,0.696060038,0.123827392,0,,
+35,CN,CN-Upper Nass,CN_58,Yes,,0.044554455,0.259075908,0.574257426,0.122112211,0,,
+36,CN,CN-Wannock,CN_38,Yes,,0.018035427,0.397101449,0.564251208,0.020611916,0,,
+37,CO,CO-Bella Coola-Dean Rivers,CO_22,Yes,,0.945945946,0.054054054,0,0,0,,
+38,CO,CO-Brim-Wahoo,CO_28,No,,,,,,,Hecate Strait Mainland,CO_27
+39,CO,CO-Douglas Channel-Kitimat Arm,CO_29,No,,,,,,,Hecate Strait Mainland,CO_27
+40,CO,CO-Haida Gwaii-East,CO_23,No,,,,,,,Hecate Strait Mainland,CO_27
+41,CO,CO-Haida Gwaii-Graham Island Lowlands,CO_25,No,,,,,,,Hecate Strait Mainland,CO_27
+42,CO,CO-Haida Gwaii-West,CO_24,No,,,,,,,Hecate Strait Mainland,CO_27
+43,CO,CO-Hecate Strait Mainland,CO_27,Yes,,0.854411765,0.141176471,0.004411765,0,0,,
+44,CO,CO-Lower Nass,CO_35,Yes,,0.570820504,0.426372034,0.002807462,0,0,,
+45,CO,CO-Lower Skeena,CO_32,Yes,,0.892857143,0.107142857,0,0,0,Lower Nass,CO_35
+46,CO,CO-Middle Skeena,CO_33,Yes,,0.752244508,0.24565425,0.002101242,0,0,,
+47,CO,CO-Mussel-Kynoch,CO_26,No,,,,,,,Hecate Strait Mainland,CO_27
+48,CO,CO-Northern Coastal Streams,CO_30,Yes,,0.713592233,0.286407767,0,0,0,,
+49,CO,CO-Portland Sound-Observatory Inlet-Portland Canal,CO_37,Yes,,0.547586207,0.449655172,0.002758621,0,0,,
+50,CO,CO-Rivers Inlet,CO_21,Yes,,0.794117647,0.205882353,0,0,0,,
+51,CO,CO-Skeena Estuary,CO_31,No,,,,,,,Lower Nass,CO_35
+52,CO,CO-Smith Inlet,CO_20,Yes,,0.774854932,0.225145068,0,0,0,,
+53,CO,CO-Upper Nass,CO_36,Yes,,0.681271064,0.317766009,0.000722195,0.000240732,0,,
+54,CO,CO-Upper Skeena,CO_34,Yes,,0.614837398,0.380081301,0.005081301,0,0,,
+55,PKe,PKe-East Haida Gwaii,PKe_10,Yes,1,,,,,,,
+56,PKe,PKe-Hecate Lowlands,PKe_5,Yes,1,,,,,,,
+57,PKe,PKe-Hecate Strait-Fjords,PKe_6,Yes,1,,,,,,,
+58,PKe,PKe-Middle-Upper Skeena,PKe_8,Yes,1,,,,,,,
+59,PKe,PKe-Nass-Skeena Estuary,PKe_7,Yes,1,,,,,,,
+60,PKe,PKe-North Haida Gwaii,PKe_9,Yes,1,,,,,,,
+61,PKe,PKe-West Haida Gwaii,PKe_11,Yes,1,,,,,,,
+62,PKo,PKo-East Haida Gwaii,PKo_9,Yes,1,,,,,,,
+63,PKo,PKo-Hecate Strait-Fjords,PKo_13,Yes,1,,,,,,,
+64,PKo,PKo-Hecate Strait-Lowlands,PKo_12,Yes,1,,,,,,,
+65,PKo,PKo-Homathko-Klinaklini-Smith-Rivers-Bella Coola-Dean,PKo_8,Yes,1,,,,,,,
+66,PKo,PKo-Lower Skeena,PKo_15,Yes,1,,,,,,,
+67,PKo,PKo-Middle & Upper Skeena,PKo_16,Yes,1,,,,,,,
+68,PKo,PKo-Nass-Portland-Observatory,PKo_17,Yes,1,,,,,,,
+69,PKo,PKo-Nass-Skeena Estuary,PKo_14,Yes,1,,,,,,,
+70,SX,SX-Alastair,SX_L-20-01,Yes,,0.006622517,0.01986755,0.59602649,0.377483444,0,,
+71,SX,SX-Asitika,SX_L-22-01,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+72,SX,SX-Awun,SX_L-17-02,No,,,,,,,Area 1,1
+73,SX,SX-Azuklotz,SX_L-22-02,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+74,SX,SX-Babine,SX_L-21-02,Yes,,0.014123163,0.474755561,0.508262336,0.00285894,0,,
+75,SX,SX-Backland,SX_L-18-01,No,,,,,,,Area 6,6
+76,SX,SX-Bear,SX_L-22-03,Yes,,0.065217391,0.282608696,0.652173913,0,0,Area 4 -Babine (1%-41%-52%-6%),04-B
+77,SX,SX-Bloomfield,SX_L-19-02,Yes,,0.333333333,0,0.666666667,0,0,Area 6,6
+78,SX,SX-Canoona,SX_L-18-02,No,,,,,,,Area 6,6
+79,SX,SX-Curtis Inlet,SX_L-19-11,No,,,,,,,Area 6,6
+80,SX,SX-Damdochax,SX_L-24-02,Yes,,0,0.31824611,0.658415842,0.022630835,0.000707214,,
+81,SX,SX-Damshilgwit,SX_L-22-04,Yes,,0,0.746268657,0.253731343,0,0,Area 4 -Babine (1%-41%-52%-6%),04-B
+82,SX,SX-Devon,SX_L-19-14,No,,,,,,,Area 6,6
+83,SX,SX-Evelyn,SX_L-18-04,No,,,,,,,Area 6,6
+84,SX,SX-Fred Wright,SX_L-24-03,Yes,,0.001685393,0.44494382,0.515168539,0.038202247,0,,
+85,SX,SX-Freeda,SX_L-19-20,No,,,,,,,Area 6,6
+86,SX,SX-Hartley Bay,SX_L-19-21,No,,,,,,,Area 6,6
+87,SX,SX-Johnston,SX_L-20-05,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+88,SX,SX-Kadjusdis River,SX_L-19-24,No,,,,,,,Area 7,7
+89,SX,SX-Kainet Creek,SX_L-18-05,No,,,,,,,Area 7,7
+90,SX,SX-Keecha,SX_L-19-26,No,,,,,,,Area 6,6
+91,SX,SX-Kitlope,SX_L-18-08,No,,,,,,,Area 6,6
+92,SX,SX-Kitsumkalum,SX_L-20-06,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+93,SX,SX-Kitwancool,SX_L-21-05,Yes,,0.003344482,0.531772575,0.397993311,0.066889632,0,,
+94,SX,SX-Koeye,SX_L-19-33,No,,,,,,,Area 8,8
+95,SX,SX-Kooryet,SX_L-19-34,No,,,,,,,Area 6,6
+96,SX,SX-Kwakwa Creek,SX_L-19-36,Yes,,0.043478261,0.797101449,0.15942029,0,0,Area 7,7
+97,SX,SX-Lakelse,SX_L-20-07,Yes,,0.005154639,0.546391753,0.448453608,0,0,Area 4 -Babine (1%-41%-52%-6%),04-B
+98,SX,SX-Long,SX_L-15-01,Yes,,0.002651013,0.364324938,0.621662564,0.011361485,0,,
+99,SX,SX-Lowe/Simpson/Weir,SX_L-19-39,No,,,,,,,Area 6,6
+100,SX,SX-Lower Nass - Portland,SX_R20,No,,,,,,,Upper Nass River,SX_R21
+101,SX,SX-Marian,SX_L-17-05,No,,,,,,,Area 1,1
+102,SX,SX-Mary Cove Creek,SX_L-19-40,Yes,,0,0.333333333,0.666666667,0,0,Area 7,7
+103,SX,SX-Mathers,SX_L-17-06,Yes,,0.016806723,0.378151261,0.605042017,0,0,Area 2E,02E
+104,SX,SX-Mcdonell,SX_L-20-08,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+105,SX,SX-Mercer,SX_L-17-07,No,,,,,,,Area 2E,02E
+106,SX,SX-Meziadin,SX_L-24-05,Yes,,0.002352186,0.268755123,0.600057023,0.128621833,0.000213835,,
+107,SX,SX-Mikado,SX_L-19-43,No,,,,,,,Area 6,6
+108,SX,SX-Morice,SX_L-21-07,Yes,,0,0.020408163,0.571428571,0.408163265,0,,
+109,SX,SX-Motase,SX_L-22-08,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+110,SX,SX-Namu,SX_L-19-45,No,,,,,,,Area 8,8
+111,SX,SX-Northern Coastal Fjords,SX_R16,Yes,,0.13592233,0.593851133,0.257281553,0.012944984,0,,
+112,SX,SX-Owikeno,SX_L-15-02,Yes,,0.007879019,0.284915491,0.699072309,0.0080061,0.000127081,,
+113,SX,SX-Port John,SX_L-19-46,No,,,,,,,Area 8,8
+114,SX,SX-Prudhomme,SX_L-19-49,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+115,SX,SX-Roderick,SX_L-19-50,Yes,,0.0625,0.40625,0.5,0.015625,0.015625,Area 7,7
+116,SX,SX-Shawatlan,SX_L-19-54,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+117,SX,SX-Skeena River-high interior,SX_R19,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+118,SX,SX-Skidegate,SX_L-17-08,Yes,,0.034285714,0.768571429,0.197142857,0,0,,
+119,SX,SX-Stephens,SX_L-21-09,No,,,,,,,Area 4 -Babine (1%-41%-52%-6%),04-B
+120,SX,SX-Swan,SX_L-21-10,Yes,,0.01,0.09,0.9,0,0,Area 4 -Babine (1%-41%-52%-6%),04-B
+121,SX,SX-Tahlo/Morrison,SX_L-21-11,No,,,,,,,Babine,SX_L-21-02
+122,SX,SX-Tankeeah River,SX_L-19-60,Yes,,0.040816327,0.722135008,0.226059655,0.010989011,0,,
+123,SX,SX-Tsimtack/Moore/Roger,SX_L-19-62,No,,,,,,,Area 6,6
+124,SX,SX-Upper Nass River,SX_R21,Yes,,0,0.75862069,0.24137931,0,0,,
+125,SX,SX-Yakoun,SX_L-17-09,Yes,,0,0.65,0.325,0.025,0,,
+126,SX,SX-Yeo,SX_L-19-70,No,,,,,,,Area 7,7
