@@ -1,2 +1,2 @@
 ﻿scenario,species,simYears,nIndicator,nNonIndicator,nPop,a_mean,sigma_a,b,rho,sigma_u,correlPop,corrMat,recCap,extinctThresh,gen,meanRec2,meanRec3,meanRec4,meanRec5,meanRec6,ageErr,harvContRule,targetHarvest,sigma_harvest,sigma_obs,obs_bias,sigma_catch,obsAgeErr,ppnSampled,ppnChange,samplingDeclStart,samplingDeclEnd,ExpFactor3
-base,chum,50,15,20,35,1.4,0.12,0.0001,0.476,0.68,-0.076,FALSE,500000,100,5,0,0.23,0.64,0.13,0,0.8,fixedER,0.35,0.13,0.5,-0.4,0.2,0.1,0.85,-0.18,40,40,1.5
+base,chum,50,15,20,35,1.4,0.12,0.0001,0.476,0.68,-0.076,FALSE,500000,100,5,0,0.23,0.64,0.13,0,0.8,fixedER,0.35,0.13,0.5,-0.4,0.2,0.1,0.728,-0.416,24,50,1.5

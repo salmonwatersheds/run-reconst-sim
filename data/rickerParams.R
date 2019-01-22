@@ -165,7 +165,7 @@ mean(sdPop) # Slightly lower
 
 #-------------
 correlPop <- 2*correlPop
-nPop <- 10
+nPop <- 35
 sigMat <- matrix(as.numeric(sigma_u), nrow = 1, ncol = nPop) 
 varMat <- t(sigMat) %*% sigMat # Calculate shared variance
 covMat <- correlPop * varMat # Correct based on correlation
