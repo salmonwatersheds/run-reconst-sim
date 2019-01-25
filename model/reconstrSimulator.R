@@ -216,7 +216,7 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	# Add lognormal observation error to all spawners
 	obsSpawners <- spawners[(simPar$gen + 3):nYears, ] * matrix(exp(
 		qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
-					0, # -simPar$sigma_obs^2 / 2, # Change this to zero???
+					simPar$r54obsBias - simPar$sigma_obs^2 / 2, # Lognormal correction
 					simPar$sigma_obs)), 
 		nrow = simYears, ncol = nPop)
 	
@@ -232,9 +232,8 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	
 	#_____
 	# Add error to observed catch for CU
-	# ** If adding bias in catch, this is where you'd put it **
 	obsCatch <- trueCatch[(simPar$gen + 3):nYears] * exp(qnorm(runif(simYears, 0.0001, 0.9999), 
-					0, #-simPar$sigma_obs^2 / 2, # Change this to zero???
+					simPar$catch_bias - simPar$sigma_obs^2 / 2, # Change this to zero???
 					simPar$sigma_catch))
 	
 	#_____
