@@ -216,7 +216,7 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	# Add lognormal observation error to all spawners
 	obsSpawners <- spawners[(simPar$gen + 3):nYears, ] * matrix(exp(
 		qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
-					simPar$r54obsBias - simPar$sigma_obs^2 / 2, # Lognormal correction
+					simPar$obs_bias - simPar$sigma_obs^2 / 2, # Lognormal correction
 					simPar$sigma_obs)), 
 		nrow = simYears, ncol = nPop)
 	
@@ -227,6 +227,14 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 														samplingDeclStart = simPar$samplingDeclStart,
 														samplingDeclEnd = simPar$samplingDeclEnd,
 														gen = simPar$gen)
+	
+	# Constraint: at least one indicator stream has to be monitored each year,
+	# otherwise you get a value for ExpFactor1 of Inf
+	nIndicatorMonitored <- apply(z[,1:simPar$nIndicator] == 1, 1, sum)
+	if(length(which(nIndicatorMonitored == 0)) > 0){
+		# Randomly choose one indicator stream to be monitored for each year that has none monitored
+		z[cbind(which(nIndicatorMonitored == 0), sample(1:simPar$nIndicator, size = length(which(nIndicatorMonitored == 0))))] <- 1
+	}
 	
 	sampledSpawners <- z * obsSpawners # 0 = not monitored
 	
@@ -263,8 +271,8 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	spawnersExp2 <- dumExp2[[1]] * spawnersExp1
 	
 	# Expansion Factor II to account for observer efficiency
-	# spawnersExp3 <- simPar$ExpFactor3 * spawnersExp2
-	spawnersExp3 <- 1 * spawnersExp2
+	spawnersExp3 <- simPar$ExpFactor3 * spawnersExp2
+	# spawnersExp3 <- 1 * spawnersExp2
 	
 	#_____
 	# Reconstructing recruitment

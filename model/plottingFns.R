@@ -38,8 +38,8 @@ plotStatusDiff <- function(statusDiff){
 	for(i in 1:3){
 		for(j in 1:3){
 			if(i == j) polygon(x = c(j, j+1, j+1, j), y = 4 - c(i , i , i-1, i-1), border = NA, col = statusCols[4-i])
-			# text(4 - i + 0.5, j+0.5, paste(statusDiffMat[i,j]/length(statusDiff)*100, "%"))
-			text(j + 0.5, 4 - i + 0.5, statusDiffMat[i,j])
+			text(j + 0.5, 4 - i + 0.5, paste(formatC(round(statusDiffMat[i,j]/length(statusDiff)*100, 1), 1, format="f"), "%"))
+			# text(j + 0.5, 4 - i + 0.5, statusDiffMat[i,j])
 		}
 	}
 	

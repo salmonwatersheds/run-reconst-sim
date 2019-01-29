@@ -11,9 +11,9 @@
 #' @param obsStatus A list outcome from the assessPop function applied to
 #' the observed data.
 #' @return Returns a list, with the first element equal to a 2x2 matrix of the 
-#' raw error (observed - true) for the upper and lower benchmarks (columns)
-#' and both SR and percentile metrics (rows) and second element equal to a 
-#' status code (see details).
+#' mean percent error ((observed - true)/true) for the upper and lower benchmarks 
+#' (columns) and both SR and percentile metrics (rows) and second element equal
+#' to a status code (see details).
 #' @details The status code indicates the difference between true and observed
 #' status outcomes for the two metrics. For each metric, the code is a numeric
 #' from 1 - 9 that indicates:
@@ -32,11 +32,11 @@
 
 perfStatus <- function(trueStatus, obsStatus) {
 	
-	benchBias <- cbind(
-		obsStatus$lowerBenchmark - trueStatus$lowerBenchmark, 
-		obsStatus$upperBenchmark - trueStatus$upperBenchmark)
-	colnames(benchBias) <- c("lower", "upper")
-	rownames(benchBias) <- c("SR", "perc")
+	benchMPE <- cbind(
+		(obsStatus$lowerBenchmark - trueStatus$lowerBenchmark)/trueStatus$lowerBenchmark, 
+		(obsStatus$upperBenchmark - trueStatus$upperBenchmark)/trueStatus$upperBenchmark)
+	colnames(benchMPE) <- c("lower", "upper")
+	rownames(benchMPE) <- c("SR", "perc")
 	
 	statusDiff <- numeric(2)
 	for (i in 1:2){ # For each metric
@@ -59,6 +59,6 @@ perfStatus <- function(trueStatus, obsStatus) {
 		}
 	}
 	
-	return(list(benchBias = benchBias, statusDiff = statusDiff))
+	return(list(MPE = benchMPE, statusDiff = statusDiff))
 	
 }
