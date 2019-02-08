@@ -23,7 +23,7 @@ meanER_period1 <- mean(datER$datavalue[datER$year <= 1990])
 meanER_period2 <- mean(datER$datavalue[datER$year > 1990])
 
 # Perhaps makes more sense to look at sd among CUs within each year?
-mean(tapply(datER$datavalue, datER$year, sd))
+sdER2 <- mean(tapply(datER$datavalue, datER$year, sd))
 # This is slightly lower than looking across all time.
 
 ###############################################################################
@@ -47,3 +47,21 @@ for(i in 1:8){
 segments(x0=1954, x1=1990, y0=meanER_period1, y1=meanER_period1, lty=2, l)
 segments(x0=1991, x1=2014, y0=meanER_period2, y1=meanER_period2, lty=2)
 legend("topright", col=colCU, lwd=1, CU_names, ncol=2)
+
+###############################################################################
+# Representing with beta distribution
+###############################################################################
+betaPar <- function(mean, sd){
+	beta1 <- (mean^2 - mean^3 - sd^2*mean)/(sd^2)
+	beta2 <- (mean * (1 - mean)^2 - sd^2*(1 - mean))/(sd^2)
+	return(c(beta1, beta2))
+}
+
+betaER <- betaPar(meanER, sdER2)
+h <- rbeta(10^3, shape1 = betaER[1], shape2 = betaER[2])
+
+hist(h, freq=FALSE)
+lines(seq(0, 1, 0.01), dbeta(seq(0, 1, 0.01), shape1 = betaER[1], shape2 = betaER[2]))
+
+mean(h)
+sd(h)

@@ -120,3 +120,65 @@ ppnAgeErr <- function(ppnAgeVec, omega, nYears) {
 	p <- p.dum/apply(p.dum, 1, sum)
 	return(p)
 }
+
+
+#______________________________________________________________________________
+#' Calclate realized harvest rate given target (mean) and standard deviation
+#'
+#' This function generates harvest rates bound between zero and one,
+#' incorporating either beta or normal error around a target harvest rate, h'.
+#'
+#' @param targetHarvest A single value or vector (for temporal changes in 
+#' harvest rates) giving the target harvest rate
+#' @param sigmaHarvest A single value for the standard deviation in error
+#' around the target harvest rate
+#' @param nYears The number of realized harvest rates to return. If 
+#' targetHarvest is a vector, then nYears must equal length(targetHarvest)
+#' @param errorType Must be one of "beta" or "normal" specifying the error
+#' distribution for the realized harvest rates.  Default is beta.
+#' 
+#' @return Returns a numeric vector of realized harvest rates for each year 
+#' in nYears
+#'
+#' @examples
+#'
+#' @export
+
+realizedHarvestRate <- function(targetHarvest, sigmaHarvest, nYears = length(targetHarvest), errorType = "beta") {
+	
+	# Checks
+	if(errorType != "beta" & errorType != "normal"){
+		stop("Unknown error distribution. Must be beta or normal.")
+	}
+	
+	if(length(targetHarvest) > 1 & length(targetHarvest) != nYears){
+		stop("If length(targetHarvest)>1, then must equal nYears")
+	}
+	
+	#-----------------------------
+	# BETA error
+	if(errorType == "beta"){
+		beta1 <- (targetHarvest^2 - targetHarvest^3 - sigmaHarvest^2*targetHarvest)/(sigmaHarvest^2)
+		beta2 <- (targetHarvest * (1 - targetHarvest)^2 - sigmaHarvest^2*(1 - targetHarvest))/(sigmaHarvest^2)
+		harvestRate <- rbeta(n = nYears, shape1 = beta1, shape2 = beta2)
+		
+	#-----------------------------
+	# NORMAL error
+	} else if (errorType == "normal"){
+		
+		# Equation (F19) from Holt et al. (2018 CSAS)
+		harvestRate <- targetHarvest + qnorm(runif(nYears, 0.0001, 0.9999), 0, sigmaHarvest)
+		
+		# If harvest rate is < 0 or > 1, resample as in Holt et al. (2018)
+		while (length(which(harvestRate > 1 | harvestRate < 0)) > 0) {
+			if(length(targetHarvest) == 1){
+				harvestRate[which(harvestRate > 1 | harvestRate < 0)] <- targetHarvest + qnorm(runif(length(which(harvestRate > 1 | harvestRate < 0)), 0.0001, 0.9999), 0, sigmaHarvest)
+			} else if(length(targetHarvest) > 1){
+				harvestRate[which(harvestRate > 1 | harvestRate < 0)] <- targetHarvest[which(harvestRate > 1 | harvestRate < 0)] + qnorm(runif(length(which(harvestRate > 1 | harvestRate < 0)), 0.0001, 0.9999), 0, sigmaHarvest)
+			} # end if
+		} #end while
+	} # end normal error
+
+	return(harvestRate)
+	}
+

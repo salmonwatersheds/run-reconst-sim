@@ -104,15 +104,13 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 		}
 	
 	#_____
-	# Calculate true harvest rates (assumed constant across subpopulations)
-	# Equation (F19) from Holt et al. (2018 CSAS)
-	# ** Target harvest rates are not changing through time for now, but
-	# this is a second priority to vary. **
-	harvestRate <- simPar$targetHarvest + qnorm(runif(nYears, 0.0001, 0.9999), 0, simPar$sigma_harvest)
-	# If harvest rate is < 0 or > 1, resample as in Holt et al. (2018)
-	while (length(which(harvestRate > 1 | harvestRate < 0)) > 0) {
-		harvestRate[which(harvestRate > 1 | harvestRate < 0)] <- simPar$targetHarvest + qnorm(runif(length(which(harvestRate > 1 | harvestRate < 0)), 0.0001, 0.9999), 0, simPar$sigma_harvest)
-	}
+	# Calculate realized harvest rates (assumed constant across subpopulations)
+	
+	harvestRate <- realizedHarvestRate(
+		targetHarvest = simPar$targetHarvest, 
+		sigmaHarvest = simPar$sigma_harvest,
+		nYears = nYears, 
+		errorType = "beta")
 	
 	#_____
 	# Calculate covMat: covariance matrix for recruitment residuals
