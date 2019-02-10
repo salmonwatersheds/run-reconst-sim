@@ -73,7 +73,7 @@
 #' @export
 
 
-reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
+reconstrSim <- function(simPar, cuCustomCorrMat=NULL,
 												dirName = NULL, uniqueProd=TRUE, seed = NULL) {
 	
 	# If a seed for simulation is provided, then set the seed for the simulation here
@@ -90,6 +90,17 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	simYears <- simPar$simYears
 	nYears <- (simPar$gen + 2) + simYears
 	ages <- 2:6
+	
+	#_____
+	# Draw productivity and density dependence parameters
+	a <- rnorm(nPop, simPar$a_mean, simPar$sigma_a)
+	
+	# Draw Smax
+	Smax <- c(rlnorm(simPar$nIndicator, simPar$logSmax_ind_mean, simPar$logSmax_ind_sd), rlnorm(simPar$nNonIndicator, simPar$logSmax_nonInd_mean, simPar$logSmax_nonInd_sd))
+	# Check
+	if(length(Smax) != nPop) stop("Number of indicator and non-indicator streams does not match nPop.")
+	
+	b <- 1/Smax
 	
 	#_____
 	# Calculate proportion at age  
@@ -143,8 +154,8 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	
 	# Check "sigma" for rmvnorm() is positive semi-definite:
 	if(is.positive.definite(covMat) == FALSE){
-		warning("Covariance matrix for residuals is not positive definite. Adjusted to conform using make.positive.definite()")
-		covMat <- make.positive.definite(covMat)
+		stop("Covariance matrix for residuals is not positive definite.")
+		# covMat <- make.positive.definite(covMat)
 	}
 	
 	
@@ -169,13 +180,13 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	
 	# Initialize spawners at 20% of Seq (Holt 2018 CSAS) 
 	# and recruitment error for first year
-	spawners[1:(simPar$gen + 2), ] <- 0.2 * a / simPar$b
+	spawners[1:(simPar$gen + 2), ] <- 0.2 * a / b
 	phi[1,]<-0
 	
 	# Loop over first 7 years for chum (par$gen + 2)
 	for (y in 1:(simPar$gen + 2)){ #first obsLag period necessary to generate recBY
 		dum <- rickerModel(S = spawners[y, ], a = a, b = rep(simPar$b, nPop), 
-											 error = rmvnorm(1, rep(0, nPop), sigma = covMat),
+											 error = rmvnorm(1, rep(-simPar$sigma_u^2 / 2, nPop), sigma = covMat),
 											 rho = simPar$rho,
 											 phi_last = phi[y, ])
 		recruitsBY[y, ] <- apply(rbind(dum[[1]], simPar$recCap), 2, min)
@@ -196,7 +207,7 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 		
 		# Apply Ricker model to calculate recruits
 		dum <- rickerModel(S = spawners[y, ], a = a, b = rep(simPar$b, nPop), 
-											 error = rmvnorm(1, rep(0, nPop), sigma = covMat),
+											 error = rmvnorm(1, rep(-simPar$sigma_u^2 / 2, nPop), sigma = covMat),
 											 rho = simPar$rho,
 											 phi_last = phi[y, ])
 		
@@ -220,11 +231,22 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	
 	#_____
 	# Apply monitoring design (random sampling of propSampled each year)
-	z <- samplingDesign(ppnSampled = simPar$ppnSampled, nPop, simYears,
-														ppnChange = simPar$ppnChange, 
-														samplingDeclStart = simPar$samplingDeclStart,
-														samplingDeclEnd = simPar$samplingDeclEnd,
-														gen = simPar$gen)
+	# Different for indicator (first) and non-indicator (second)
+	z <- cbind(
+			samplingDesign(ppnSampled = simPar$ppnSampled_ind, 
+										 nPop = simPar$nIndicator, 
+										 simYears = simYears,
+										 ppnChange = simPar$ppnChange_ind,
+										 samplingDeclStart = simPar$samplingDeclStart,
+										 samplingDeclEnd = simPar$samplingDeclEnd,
+										 gen = simPar$gen),
+			samplingDesign(ppnSampled = simPar$ppnSampled_nonInd, 
+										 nPop = simPar$nNonIndicator, 
+										 simYears = simYears,
+										 ppnChange = simPar$ppnChange_nonInd,
+										 samplingDeclStart = simPar$samplingDeclStart,
+										 samplingDeclEnd = simPar$samplingDeclEnd,
+										 gen = simPar$gen))
 	
 	# Constraint: at least one indicator stream has to be monitored each year,
 	# otherwise you get a value for ExpFactor1 of Inf
@@ -235,6 +257,10 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	}
 	
 	sampledSpawners <- z * obsSpawners # 0 = not monitored
+	
+	# Include incomplete monitoring of spawners observed without a bias
+	# to separate out effects of Expansion Factor I and II without III
+	sampledSpawners_noBias <- z * spawners[(simPar$gen + 3):nYears, ]
 	
 	#_____
 	# Add error to observed catch for CU
@@ -261,28 +287,27 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	# Expansion Factor I to account for indicator streams not monitored
 	dumExp1 <- ExpFactor1(sampledSpawners = sampledSpawners[, 1:simPar$nIndicator])
 	spawnersExp1 <- dumExp1[[1]] * apply(sampledSpawners[, 1:simPar$nIndicator], 1, sum)
-	
+		
 	# Expansion Factor II to account for non-indicator streams
 	dumExp2 <- ExpFactor2(
 		spawnersInd = sampledSpawners[, 1:simPar$nIndicator], 
 		spawnersNonInd = sampledSpawners[, (simPar$nIndicator + 1):simPar$nPop])
 	spawnersExp2 <- dumExp2[[1]] * spawnersExp1
-	
+			
 	# Expansion Factor II to account for observer efficiency
 	spawnersExp3 <- simPar$ExpFactor3 * spawnersExp2
-	# spawnersExp3 <- 1 * spawnersExp2
 	
 	#_____
 	# Reconstructing recruitment
 	# Observed returns based on total spawners and obsCatch
 	obsReturn <- obsCatch + spawnersExp3
-	
+			
 	# Observed recruits by brood year
 	# Note: included the obsPpnAge!=0 so that NAs aren't produced when we're 
 	# missing, e.g., age 6 returns
 	recruitsShifted <- matrix(unlist(shift(x = obsReturn, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(ages[obsPpnAge!=0]))
 	obsRecruitsBY <-  recruitsShifted %*% obsPpnAge[obsPpnAge!=0]
-
+		
 	# Sanity check: Does the fancy matrix jiggery pokery work?
 	# obsReturn[4] * obsPpnAge[2] + obsReturn[5] * obsPpnAge[3] + obsReturn[6] * obsPpnAge[4]
 	# obsRecruitsBY[1]
@@ -297,20 +322,62 @@ reconstrSim <- function(simPar, a = a, cuCustomCorrMat=NULL,
 	trueData <- data.frame(S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
 	trueStatus <- assessPop(SR.pairs = trueData, gen = simPar$gen)
 	
+	# ****************************************************************************
+	# Two categories of partial application of the observation submodel:
+	# a) Perfect observation but incomplete coverage (separates out effect
+	#		 of Expansion Factors I and II)
+			dumExp1a <- ExpFactor1(sampledSpawners = sampledSpawners_noBias[, 1:simPar$nIndicator])
+			spawnersExp1a <- dumExp1a[[1]] * apply(sampledSpawners_noBias[, 1:simPar$nIndicator], 1, sum)
+			
+			dumExp2a <- ExpFactor2(
+				spawnersInd = sampledSpawners_noBias[, 1:simPar$nIndicator], 
+				spawnersNonInd = sampledSpawners_noBias[, (simPar$nIndicator + 1):simPar$nPop])
+			spawnersExp2a <- dumExp2a[[1]] * spawnersExp1a
+			
+			spawnersExp3a <- 1 * spawnersExp2a # Expansion Factor III = 1 because no obs_bias
+			
+			obsReturna <- obsCatch + spawnersExp3a
+			
+			recruitsShifteda <- matrix(unlist(shift(x = obsReturna, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(ages[obsPpnAge!=0]))
+			
+			obsRecruitsBYa <-  recruitsShifteda %*% obsPpnAge[obsPpnAge!=0]
+			
+			obsDataa <- data.frame(S = spawnersExp3a, R = obsRecruitsBYa)
+			obsStatusa <- assessPop(SR.pairs = obsDataa, gen = simPar$gen)
+			
+	# b) Imperfect observation but complete coverage (separates out effect
+	#		 of Expansion Factor III)
+			spawnersExp3b <- simPar$ExpFactor3 * apply(obsSpawners, 1, sum)
+			
+			obsReturnb <- obsCatch + spawnersExp3b
+			
+			recruitsShiftedb <- matrix(unlist(shift(x = obsReturnb, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(ages[obsPpnAge!=0]))
+			
+			obsRecruitsBYb <-  recruitsShiftedb %*% obsPpnAge[obsPpnAge!=0]
+			
+			obsDatab <- data.frame(S = spawnersExp3b, R = obsRecruitsBYb)
+			obsStatusb <- assessPop(SR.pairs = obsDatab, gen = simPar$gen)
+			
+	# ****************************************************************************
+	
+	
 	#-----------------------------------------------------------------------------
 	# Performance
 	#-----------------------------------------------------------------------------
 	
 	P <- perfStatus(trueStatus, obsStatus)
+	Pa <- perfStatus(trueStatus, obsStatusa)
+	Pb <- perfStatus(trueStatus, obsStatusb)
 	
 	#-----------------------------------------------------------------------------
 	# END
 	#-----------------------------------------------------------------------------
 	
 	return(list(
-		performance = P, 
-		status = list(obsStatus, trueStatus),
-		data = list(obsData, trueData)
+		performance = list(P, Pa, Pb), 
+		status = list(true = trueStatus, obs = obsStatus, obsa = obsStatusa, obsb = obsStatusb),
+		data = list(true = trueData, obs = obsData),
+		RickerPar = list(a = a, Smax = Smax)
 	))
 	
 } # end recoverySim function

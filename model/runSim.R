@@ -6,25 +6,24 @@ library(gsl) # for lambert_W0 function
 library(doParallel) # for parallelizing function application over parameters or MCMC iterations
 
 
-source("populationSubmodFns.R")
-source("obsSubmodFns.R")
-source("expansionFactors.R")
-source("benchmarkFns.R")
-source("performanceFns.R")
-source("reconstrSimulator.R")
+source("model/populationSubmodFns.R")
+source("model/obsSubmodFns.R")
+source("model/expansionFactors.R")
+source("model/benchmarkFns.R")
+source("model/performanceFns.R")
+source("model/reconstrSimulator.R")
 
-source("plottingFns.R")
+source("model/plottingFns.R")
 
 #Temporary inputs
 # here <- here::here
 simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
-# cuCustomCorrMat <- read.csv(here("data/baseCorrMatrix.csv"), stringsAsFactors=F)
 
-set.seed(987) #a1
-# set.seed(98567) #a2
-# set.seed(6123478) #a3
-
-a <- rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)
+# set.seed(987) #a1
+# # set.seed(98567) #a2
+# # set.seed(6123478) #a3
+# 
+# a <- rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)
 
 # Plot three different "draws" of a parameter. Does it make a difference for performace results?
 # par(mfrow=c(1,1), mar=c(4,4,2,1))

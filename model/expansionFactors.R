@@ -372,13 +372,38 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	
 	# ----------------------------------------------------------------------------
 	# Step 1: Determine suitable reference decade for each year
-	# This is current decade if each INDICATOR stream (NOT non-indicator) is
+	# This is current decade if each indicator AND non-indicator stream is
 	# monitored at least once, or a reference decade as determined by refDecade()
 	# ----------------------------------------------------------------------------
 	
-	decadeDummy <- refDecade(sampledSpawners = spawnersInd, years = years, legacy = legacy)
-	ref.decade <- decadeDummy$ref
-	decadesFactor <- decadeDummy$decadesFactor
+	decadeDummyInd <- refDecade(sampledSpawners = spawnersInd, years = years, legacy = legacy)
+	decadeDummynonInd <- refDecade(sampledSpawners = spawnersNonInd, years = years, legacy = legacy)
+	
+	decadesFactor <- decadeDummynonInd$decadesFactor
+	
+	# If the reference decades for indicator and non-indicator match, then use that:
+	if(sum(decadeDummyInd$ref - decadeDummynonInd$ref) == 0){
+		ref.decade <- decadeDummyInd$ref
+		decadesFactor <- decadeDummyInd$decadesFactor
+	
+	# If they don't match, then need to use a replacement decade for the decade 
+	# that doesn't have enough data for one, even if there's enough data for 
+	# the other
+	} else {
+		# If the reference decade for indicator streams are the given decade
+		# then use the reference decade for non-indicator as that's the limiting factor
+		if(sum(decadeDummyInd$ref - decadeDummyInd$decadesFactor) == 0){
+			ref.decade <- decadeDummynonInd$ref
+		# If the reference decade for non-indicator streams are the given decade
+		# then use the reference decade for indicator as that's the limiting factor
+		} else if(sum(decadeDummynonInd$ref - decadeDummynonInd$decadesFactor) == 0){
+				ref.decade <- decadeDummyInd$ref
+		# If they both use different reference decades, then default to using the 8090 rule:		
+		} else {
+			ref.decade <- 8090
+		}
+		} # end ref don't match
+	
 	
 	# ----------------------------------------------------------------------------
 	# Step 2: Calculate average escapement to streams per decade and Expansion 
@@ -389,11 +414,23 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	if(ref.decade[1] == 8090){ 
 		years.to.use <- which(years == 1980): which(years == 1999)
 	
-		# Remove any non-indicator streams that weren't counted in that decade to avoid zeroes in the denominator
-		nonInd.to.use <- which(apply(spawnersNonInd[years.to.use, ] != 0, 2, sum) > 0)
+		# If criteria is just using indicator, then I had this rule to avoid zeros
+		# Not applicable now that using a criteria for both indicator and non-indicator
+		# to have at least one observation per decade.
+		# # Remove any non-indicator streams that weren't counted in that decade to avoid zeroes in the denominator
+		# nonInd.to.use <- which(apply(spawnersNonInd[years.to.use, ] != 0, 2, sum) > 0)
+		
+		# If there are non-indicator or indicator streams that weren't counted, stop!
+		if(length(which(apply(spawnersNonInd[years.to.use, ] != 0, 2, sum) == 0)) > 0){
+			stop("Some non-indicator streams weren't counted in reference decade for Expansion Factor II.")
+		}
+		if(length(which(apply(spawnersInd[years.to.use, ] != 0, 2, sum) == 0)) > 0){
+			stop("Some indicator streams weren't counted in reference decade for Expansion Factor II.")
+		}
 		
 		avgInd <- apply(spawnersInd[years.to.use, ], 2, sum) / apply(spawnersInd[years.to.use, ] != 0, 2, sum)
-		avgNonInd <- apply(spawnersNonInd[years.to.use, nonInd.to.use], 2, sum) / apply(spawnersNonInd[years.to.use, nonInd.to.use] != 0, 2, sum)
+		# avgNonInd <- apply(spawnersNonInd[years.to.use, nonInd.to.use], 2, sum) / apply(spawnersNonInd[years.to.use, nonInd.to.use] != 0, 2, sum)
+		avgNonInd <- apply(spawnersNonInd[years.to.use, ], 2, sum) / apply(spawnersNonInd[years.to.use, ] != 0, 2, sum)
 		
 		ExpFac2 <- (sum(avgInd) + sum(avgNonInd)) / sum(avgInd)
 	
@@ -404,15 +441,25 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 			
 			years.to.use <- which(decadesFactor == unique(ref.decade)[d])
 			
-			# Remove any non-indicator streams that weren't counted in that decade to avoid zeroes in the denominator
-			nonInd.to.use <- which(apply(spawnersNonInd[years.to.use, ] != 0, 2, sum) > 0)
+			# # Remove any non-indicator streams that weren't counted in that decade to avoid zeroes in the denominator
+			# nonInd.to.use <- which(apply(spawnersNonInd[years.to.use, ] != 0, 2, sum) > 0)
+			# 
+			# If there are non-indicator or indicator streams that weren't counted, stop!
+			if(length(which(apply(spawnersNonInd[years.to.use, ] != 0, 2, sum) == 0)) > 0){
+				stop("Some non-indicator streams weren't counted in reference decade for Expansion Factor II.")
+			}
+			if(length(which(apply(spawnersInd[years.to.use, ] != 0, 2, sum) == 0)) > 0){
+				stop("Some indicator streams weren't counted in reference decade for Expansion Factor II.")
+			}
 			
 			avgInd <- apply(spawnersInd[years.to.use, ], 2, sum) / apply(spawnersInd[years.to.use, ] != 0, 2, sum)
-			avgNonInd <- apply(spawnersNonInd[years.to.use, nonInd.to.use], 2, sum) / apply(spawnersNonInd[years.to.use, nonInd.to.use] != 0, 2, sum)
+			# avgNonInd <- apply(spawnersNonInd[years.to.use, nonInd.to.use], 2, sum) / apply(spawnersNonInd[years.to.use, nonInd.to.use] != 0, 2, sum)
+			avgNonInd <- apply(spawnersNonInd[years.to.use, ], 2, sum) / apply(spawnersNonInd[years.to.use, ] != 0, 2, sum)
 			
 			ExpFac2[d] <- (sum(avgInd) + sum(avgNonInd)) / sum(avgInd)
 		
-			rm(years.to.use, avgInd, avgNonInd, nonInd.to.use)
+			rm(years.to.use, avgInd, avgNonInd)
+			# rm(nonInd.to.use)
 		} # end d
 		
 	}	
