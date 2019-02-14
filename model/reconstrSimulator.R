@@ -56,10 +56,6 @@
 #'   streams that are monitored in a given year
 #'   extinctThresh: number of spawners below which the subpopulation is 
 #'   considered extinct
-#'   
-#' @param ricker_a Numeric vector of productivity parameters for each 
-#' subpopulation within the CU, so can be held constant across MCMC trials.
-#' Drawn from \code{rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)}.  
 #'
 #' @param cuCustomCorrMat If corrMat == FALSE, this is applied as a custom 
 #' matrix of spatial autocorrelation among subpopulations. Allows flexibility
@@ -73,8 +69,7 @@
 #' @export
 
 
-reconstrSim <- function(simPar, cuCustomCorrMat=NULL,
-												dirName = NULL, uniqueProd=TRUE, seed = NULL) {
+reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	
 	# If a seed for simulation is provided, then set the seed for the simulation here
 	if(length(seed) == 1){ 

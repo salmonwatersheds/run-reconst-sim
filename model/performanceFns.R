@@ -12,8 +12,9 @@
 #' the observed data.
 #' @return Returns a list, with the first element equal to a 2x2 matrix of the 
 #' mean percent error ((observed - true)/true) for the upper and lower benchmarks 
-#' (columns) and both SR and percentile metrics (rows) and second element equal
-#' to a status code (see details).
+#' (columns) and both stock-recruitment (SR) and historic spawners (HS) metrics 
+#' (rows) and second element equal to a status code (see details).
+#' 
 #' @details The status code indicates the difference between true and observed
 #' status outcomes for the two metrics. For each metric, the code is a numeric
 #' from 1 - 9 that indicates:
@@ -36,7 +37,7 @@ perfStatus <- function(trueStatus, obsStatus) {
 		(obsStatus$lowerBenchmark - trueStatus$lowerBenchmark)/trueStatus$lowerBenchmark, 
 		(obsStatus$upperBenchmark - trueStatus$upperBenchmark)/trueStatus$upperBenchmark)
 	colnames(benchMPE) <- c("lower", "upper")
-	rownames(benchMPE) <- c("SR", "perc")
+	rownames(benchMPE) <- c("SR", "HS")
 	
 	statusDiff <- numeric(2)
 	for (i in 1:2){ # For each metric

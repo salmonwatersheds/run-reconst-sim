@@ -45,31 +45,31 @@ simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
 ###############################################################################
 
 # Run three different "chains" of 1000 MCMC iterations to see how they converge
-nChains <- 3
+nChains <- 4
 
 # Run 8000 iterations within each "chain"
-nSim <- 8000
-
-out<-list(); length(out) <- 3
+nSim <- 10000
 
 # Parallelize over 3 cores - 1 for each chain
 registerDoParallel(cores=nChains)
 
-ptime <- system.time({ #10 mins for i=1:210; 2 mins for i=1:66
+ptime <- system.time({ 
 	
-	perfOut <- foreach (i = 1:nChains) %dopar% {
+	perfOut <- foreach (k = 1:nChains) %dopar% {
 		
-		perf <- list(
+		perfL <- list(
 			SR = matrix(NA, nrow = nSim, ncol = 3),
-			perc = matrix(NA, nrow = nSim, ncol = 3)
-		)
+			HS = matrix(NA, nrow = nSim, ncol = 3))
+		
+		perf <- list(all = perfL, a = perfL, b=perfL)
 		
 		for(i in 1:nSim){
-			out <- reconstrSim(simPar, a)
-			for(b in 1:2){ # SR benchmarks (b = 1) or perc benchmarks (b = 2)
-			perf[[b]][i, 1:2] <- out$performance$MPE[b, ]
-			perf[[b]][i, 3] <- out$performance$statusDiff[b]
-			}
+			out <- reconstrSim(simPar)
+			for(j in 1:3){ # for all three types of "observed data"
+				for(b in 1:2){ # SR benchmarks (b = 1) or HS benchmarks (b = 2)
+				perf[[j]][[b]][i, 1:2] <- out$performance[[1]]$MPE[b, ]
+				perf[[j]][[b]][i, 3] <- out$performance[[1]]$statusDiff[b]
+			}}
 		}
 
 		perf
@@ -79,66 +79,65 @@ ptime <- system.time({ #10 mins for i=1:210; 2 mins for i=1:66
 
 ptime/60
 
-			# 	
-	# time2run <- round((proc.time()[3]-t.start)/(60), 1)
-	# cat(paste("Process time =", time2run, "minutes"))
+# 8 mins for 8000 MC iterations
 
 #-------------------------------------------------------------
 # How does the bias evolve over the number of simulations
-par(mfcol=c(2,2), mar=c(4,4,2,2), oma=c(0,3,0,0), mgp=c(3,1,0))
-plot(c(1:nSim), cumsum(perfOut[[1]]$SR[, 1])/c(1:nSim), "l", xlab="Number of simulations", ylab="MPE Sgen", main="Stock-recruitment", bty="l", las=1, ylim=c(-0.04, 0.04))
-for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]]$SR[, 1])/c(1:nSim), lty=j)
-mtext(side=2, font=2, "Lower benchmark", line=5)
-abline(v = 4000, lty=2, col=4)
-abline(h =  mean(mean(perfOut[[1]]$SR[1:4000, 1]), mean(perfOut[[2]]$SR[1:4000, 1]), mean(perfOut[[3]]$SR[1:4000, 1])), col=2)
-text(5000, -0.01, paste(formatC(round(mean(mean(perfOut[[1]]$SR[1:4000, 1]), mean(perfOut[[2]]$SR[1:4000, 1]), mean(perfOut[[3]]$SR[1:4000, 1]))*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA)
+comparison <- 1 # Which set of 'observed' data to use. 1 = all, 2 = perfect obs, 3 = complete coverage
+nSimEnough <- 6000
 
-plot(c(1:nSim), cumsum(perfOut[[1]]$SR[, 2])/c(1:nSim), "l", xlab="Number of simulations", ylab="MPE Smsy", bty="l", las=1, ylim=c(-0.04, 0))
-for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]]$SR[, 2])/c(1:nSim), lty=j)
-mtext(side=2, font=2, "Upper benchmark", line=5)
-abline(v = 4000, lty=2, col=4)
-abline(h =  mean(mean(perfOut[[1]]$SR[1:4000, 2]), mean(perfOut[[2]]$SR[1:4000, 2]), mean(perfOut[[3]]$SR[1:4000, 2])), col=2)
-text(5000, -0.025, paste(formatC(round(mean(mean(perfOut[[1]]$SR[1:4000, 2]), mean(perfOut[[2]]$SR[1:4000, 2]), mean(perfOut[[3]]$SR[1:4000, 2]))*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA)
+par(mfcol=c(2,2), mar=c(3,4,2,2), oma=c(2,2,2,0), mgp=c(3,1,0))
 
-plot(c(1:nSim), cumsum(perfOut[[1]]$perc[, 1])/c(1:nSim), "l", xlab="Number of simulations", ylab="MPE S25th", main="Historic spawners", bty="l",  las=1, ylim=c(-0.1, -0.06))
-for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]]$perc[, 1])/c(1:nSim), lty=j)
-abline(v = 4000, lty=2, col=4)
-abline(h =  mean(mean(perfOut[[1]]$perc[1:4000, 1]), mean(perfOut[[2]]$perc[1:4000, 1]), mean(perfOut[[3]]$perc[1:4000, 1])), col=2)
-text(5000, -0.087, paste(formatC(round(mean(mean(perfOut[[1]]$perc[1:4000, 1]), mean(perfOut[[2]]$perc[1:4000, 1]), mean(perfOut[[3]]$perc[1:4000, 1]))*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA)
-
-plot(c(1:nSim), cumsum(perfOut[[1]]$perc[, 2])/c(1:nSim), "l", xlab="Number of simulations", ylab="MPE S75th", bty="l",  las=1, ylim=c(0.005, 0.025))
-for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]]$perc[, 2])/c(1:nSim), lty=j)
-abline(v = 4000, lty=2, col=4)
-abline(h =  mean(mean(perfOut[[1]]$perc[1:4000, 2]), mean(perfOut[[2]]$perc[1:4000, 2]), mean(perfOut[[3]]$perc[1:4000, 2])), col=2)
-text(5000, 0.012, paste(formatC(round(mean(mean(perfOut[[1]]$perc[1:4000, 2]), mean(perfOut[[2]]$perc[1:4000, 2]), mean(perfOut[[3]]$perc[1:4000, 1]))*100, 2), 1, format="f"), "%"), col=2, font=2, xpd=NA)
+for(i in 1:2){ # for both metrics
+	for(j in 1:2){ # for upper and lower bounds
+		s <- 10
+		Y <- c(
+			cumsum(perfOut[[1]][[comparison]][[i]][s:nSim, j])/c(s:nSim), 
+			cumsum(perfOut[[2]][[comparison]][[i]][s:nSim, j])/c(s:nSim), 
+			cumsum(perfOut[[3]][[comparison]][[i]][s:nSim, j])/c(s:nSim))
+		
+		plot(c(1:nSim), cumsum(perfOut[[1]][[comparison]][[i]][, j])/c(1:nSim), "l", xlab="", ylab="", bty="l",  las=1, ylim=range(Y))
+		for(k in 2:3) lines(c(1:nSim), cumsum(perfOut[[k]][[comparison]][[i]][, j])/c(1:nSim), lty=k)
+		abline(v = nSimEnough, lty=2, col=4)
+		
+		y <- mean(mean(perfOut[[1]][[comparison]][[i]][1:nSimEnough, j]), mean(perfOut[[2]][[comparison]][[i]][1:nSimEnough, j]), mean(perfOut[[3]][[comparison]][[i]][1:nSimEnough, j]))
+		abline(h =  y, col=2)
+		text(nSimEnough + 1000, y, paste(formatC(round(y*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA, pos=1)
+		
+		mtext(side=3, line=0.5, adj=0, matrix(c("a) Upper benchmark (Smsy)",  "c) Lower benchmark (Sgen1)", "b) Upper benchmark (S75th)",  "d) Lower benchmark (S25th)"), 2, 2)[j,i])
+		
+		if(j==1) mtext(side=3, line=2.5, c("Spawner-recruitment", "Historic spawners")[i], font=2)
+	}}
+mtext(side=2, outer=TRUE, "Mean percent error (MPE)")
+mtext(side=1, "Number of simulations", outer=TRUE)
 
 #-------------------------------------------------------------
 # Proportion of simulations that are wrong
 
-ppnWrong <- c(SR = mean(c(sum(perfOut[[1]]$SR[1:4000, 3]>=4)/4000, sum(perfOut[[2]]$SR[1:4000, 3]>=4)/4000, sum(perfOut[[3]]$SR[, 3]>=4)/nSim)), perc = mean(c(sum(perfOut[[1]]$perc[1:4000, 3]>=4)/4000, sum(perfOut[[2]]$perc[1:4000, 3]>=4)/4000, sum(perfOut[[3]]$perc[1:4000, 3]>=4)/4000)))
+ppnWrong <- c(SR = mean(c(sum(perfOut[[1]][[comparison]]$SR[1:4000, 3]>=4)/4000, sum(perfOut[[2]][[comparison]]$SR[1:4000, 3]>=4)/4000, sum(perfOut[[3]][[comparison]]$SR[, 3]>=4)/nSim)), HS = mean(c(sum(perfOut[[1]][[comparison]]$HS[1:4000, 3]>=4)/4000, sum(perfOut[[2]][[comparison]]$HS[1:4000, 3]>=4)/4000, sum(perfOut[[3]][[comparison]]$HS[1:4000, 3]>=4)/4000)))
 
 par(mfrow=c(1,2), mar=c(4,3,2,1), oma=c(0,3,0,0))
-plot(c(1:nSim), cumsum(perfOut[[1]]$SR[, 3]>=4)/c(1:nSim), "l", ylim=c(0, 0.1), main="Stock-recruitment", xlab="Number of simulations", bty="l", las=1, ylab="")
+plot(c(1:nSim), cumsum(perfOut[[1]][[comparison]]$SR[, 3]>=4)/c(1:nSim), "l", ylim=c(0, 0.1), main="Stock-recruitment", xlab="Number of simulations", bty="l", las=1, ylab="")
 mtext(side=2, "Proportion of simulations\nwith wrong status", line=3.5)
-for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]]$SR[, 3]>=4)/c(1:nSim), lty=j)
+for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]][[comparison]]$SR[, 3]>=4)/c(1:nSim), lty=j)
 abline(h = ppnWrong['SR'], col=2)
 text(nSim-50, 0.08, pos=1, paste(formatC(round(ppnWrong['SR']*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA)
 abline(v = 4000, lty=2, col=4)
 
-plot(c(1:nSim), cumsum(perfOut[[1]]$perc[, 3]>=4)/c(1:nSim), "l", ylim=c(0.1, 0.2), main="Historic spawners", xlab="Number of simulations", bty="l", las=1, ylab="")
-for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]]$perc[, 3]>=4)/c(1:nSim), lty=j)
-abline(h = ppnWrong['perc'], col=2)
-text(nSim-50, ppnWrong['perc'], pos=1, paste(formatC(round(ppnWrong['perc']*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA)
+plot(c(1:nSim), cumsum(perfOut[[1]][[comparison]]$HS[, 3]>=4)/c(1:nSim), "l", ylim=c(0.1, 0.2), main="Historic spawners", xlab="Number of simulations", bty="l", las=1, ylab="")
+for(j in 2:3) lines(c(1:nSim), cumsum(perfOut[[j]][[comparison]]$HS[, 3]>=4)/c(1:nSim), lty=j)
+abline(h = ppnWrong['HS'], col=2)
+text(nSim-50, ppnWrong['HS'], pos=1, paste(formatC(round(ppnWrong['HS']*100, 1), 1, format="f"), "%"), col=2, font=2, xpd=NA)
 abline(v = 4000, lty=2, col=4)
 
 #-------------------------------------------------------------
 # The misclassification of status
 par(mfrow=c(3,2))
 for(j in 1:3){
-	plotStatusDiff(perfOut[[j]]$SR[1:4000,3])
+	plotStatusDiff(perfOut[[j]][[comparison]]$SR[1:4000,3])
 	mtext(side=3, "Stock-recruitment", font=2)
 	
-	plotStatusDiff(perfOut[[j]]$perc[1:4000,3])
+	plotStatusDiff(perfOut[[j]][[comparison]]$HS[1:4000,3])
 	mtext(side=3, "Historic spawners", font=2)
 }
 
@@ -200,10 +199,11 @@ ptime/60
 
 #----------------------------------------------------
 # MPE in benchmarks
-MPE_obsBias <- list(SR = matrix(NA, nrow = length(obsBias), ncol = 2), perc = matrix(NA, nrow = length(obsBias), ncol = 2, dimnames = list(NULL, c("SR", "perc"))))
+
+MPE_obsBias <- list(SR = matrix(NA, nrow = length(obsBias), ncol = 2), HS = matrix(NA, nrow = length(obsBias), ncol = 2, dimnames = list(NULL, c("SR", "HS"))))
 for (i in 1:length(obsBias)) {
 	MPE_obsBias[[1]][i, ] <- apply(out_obsBias[[i]]$SR[, 1:2], 2, mean)
-	MPE_obsBias[[2]][i, ] <- apply(out_obsBias[[i]]$perc[, 1:2], 2, mean)
+	MPE_obsBias[[2]][i, ] <- apply(out_obsBias[[i]]$HS[, 1:2], 2, mean)
 }
 
 par(mfcol=c(1,2), mar=c(4,4,2,2), oma=c(0,0,0,0), mgp=c(3,1,0))
