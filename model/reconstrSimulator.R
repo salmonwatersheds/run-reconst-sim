@@ -180,11 +180,15 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	
 	# Loop over first 7 years for chum (par$gen + 2)
 	for (y in 1:(simPar$gen + 2)){ #first obsLag period necessary to generate recBY
-		dum <- rickerModel(S = spawners[y, ], a = a, b = rep(simPar$b, nPop), 
+		dum <- rickerModel(S = spawners[y, ],
+											 a = a, 
+											 b = b, 
 											 error = rmvnorm(1, rep(-simPar$sigma_u^2 / 2, nPop), sigma = covMat),
 											 rho = simPar$rho,
-											 phi_last = phi[y, ])
-		recruitsBY[y, ] <- apply(rbind(dum[[1]], simPar$recCap), 2, min)
+											 phi_last = phi[y, ],
+											 recCap = simPar$recCap, 
+											 extinctThresh = 0)
+		recruitsBY[y, ] <- dum[[1]]
 		phi[y+1, ] <- dum[[2]]
 	}
 	
@@ -201,12 +205,16 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		trueCatch[y] <- sum(harvestRate[y] * recruitsRY[y, ])
 		
 		# Apply Ricker model to calculate recruits
-		dum <- rickerModel(S = spawners[y, ], a = a, b = rep(simPar$b, nPop), 
+		dum <- rickerModel(S = spawners[y, ], 
+											 a = a, 
+											 b = b, 
 											 error = rmvnorm(1, rep(-simPar$sigma_u^2 / 2, nPop), sigma = covMat),
 											 rho = simPar$rho,
-											 phi_last = phi[y, ])
+											 phi_last = phi[y, ],
+											 recCap = simPar$recCap, 
+											 extinctThresh = 0)
 		
-		recruitsBY[y, ] <- apply(rbind(dum[[1]], simPar$recCap), 2, min)
+		recruitsBY[y, ] <- dum[[1]]
 		phi[y+1, ] <- dum[[2]]
 		
 	} # end nYears y
@@ -250,6 +258,15 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		# Randomly choose one indicator stream to be monitored for each year that has none monitored
 		z[cbind(which(nIndicatorMonitored == 0), sample(1:simPar$nIndicator, size = length(which(nIndicatorMonitored == 0))))] <- 1
 	}
+	
+	
+	# #---
+	# # Check: proportion of all indicator and non-indicator streams with at least one year of data
+	# # in each decade
+	# decade.counts <- matrix(NA, nrow = 5, ncol = nPop)
+	# for(i in 1:nPop) decade.counts[ ,i] <- tapply(z[,i], rep(1:5, each=10), sum)
+	# rbind(apply(decade.counts[, 1:simPar$nIndicator] > 0, 1, sum)/simPar$nIndicator, apply(decade.counts[, (simPar$nIndicator+1):nPop] > 0, 1, sum)/simPar$nNonIndicator)
+	# #---
 	
 	sampledSpawners <- z * obsSpawners # 0 = not monitored
 	

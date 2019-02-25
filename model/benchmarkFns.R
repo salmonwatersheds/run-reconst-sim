@@ -208,3 +208,68 @@ assessPop <- function(SR.pairs, gen) {
 		))
 	
 }
+
+#______________________________________________________________________________
+#' Return population assessment based on spawner abundance given
+#' true underlying parameters for stock-recruitment relationship 
+#' 
+#' This function returns the status category as "green", "amber", or "red",
+#' current geometric-mean spawner abundance, and upper and lower benchmarks 
+#' for both stock-recruitment (SR) and historic spawners (HS) benchmarks.
+#' 
+#' @param SR.pairs A data frame containing S (total spawner abundance to the CU)
+#' and R (recruits to the CU by brood year corresponding to the number of 
+#' spawners in the S)
+#' @param gen The length of a generation (for calculating geometric-mean 
+#' spawners over most recent generation)
+#' @return Returns a list containing the status for SR and HS metrics
+#' (green, amber, or red), corresponding status number (1 = green, 2 = amber, 
+#' 3 = red), current gemetric-mean spawner abundance, lower and upper 
+#' benchmarks for both metrics.
+#' 
+#' @examples 
+#' 
+
+assessPop <- function(SR.pairs, gen) {
+	
+	S <- SR.pairs$S
+	R <- SR.pairs$R
+	
+	# Calculate geometric mean spawners over most recent generation:
+	AvgS <- prod(tail(S, gen))^(1/gen)
+	
+	# Stock-recruit benchmarks
+	
+	# Reconstructed run (rr) to estimate Ricker a and b parameters:
+	rr <- data.frame(x = S, y = log(R/S)) 
+	# plot(rr$x, rr$y)
+	
+	fit <- lm(y ~ x, data = rr)
+	theta <- c(a = as.numeric(fit$coefficients[1]),
+						 b = - as.numeric(fit$coefficients[2]),
+						 sig = as.numeric(summary(fit)$sigma))
+	
+	# Upper SR benchmark (Smsy)
+	Smsy <- calcSmsy(a = theta[1], b = theta[2])
+	
+	# Lower SR benchmark (Sgen1)
+	# Start optimization at 20% of Smsy
+	Sgen1 <- calcSgen(Sgen.hat = 0.2*Smsy, theta = theta, Smsy = Smsy)
+	
+	statusSR <- assessMetric(current = AvgS, lower = Sgen1, upper = Smsy)
+	
+	# historic spawners benchmarks
+	
+	lowerP <- quantile(S, 0.25)
+	upperP <- quantile(S, 0.75)
+	statusHS <- assessMetric(current = AvgS, lower = lowerP, upper = upperP)
+	
+	return(list(
+		status = c(SR = statusSR[[1]], HS = statusHS[[1]]),
+		statusNum = c(SR = statusSR[[2]], HS = statusHS[[2]]),
+		current = AvgS,
+		lowerBenchmark = c(SR = Sgen1, HS = lowerP),
+		upperBenchmark = c(SR = Smsy, HS = upperP)
+	))
+	
+}

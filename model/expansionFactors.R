@@ -307,10 +307,10 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 #' formatted as for \code{spawnersInd}.
 #' @param years the years (e.g., 2001) corresponding to the rows in sampledSpawners.
 #' Default values are 1960-2009 so that a 50-year simulation gives complete decades.
-#' @param legacy logical indicating whether calculations should be computed under 
-#' legacy mode. Note: Not functional as of Dec. 28, 2018.
 #'
-#' @return a data frame containing the SpeciesID, stratum, decade and expansion factor 2 value (\code{ExpFactor2})
+#' @return a data frame containing the values for ExpFac2 by year, the code for the reference deacde
+#' applied in each year, the unique values for ExpFac2, and a code indicating the 
+#' method used to obtain the reference decade (see  Details).
 #'
 #' @details 
 #' The overall observed escapement to all streams in an area is obtained by 
@@ -318,6 +318,11 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 #' escapement for all streams in that statistical area or conservation unit for 
 #' the user defined decade or period with the best survey coverage for that 
 #' statistical area or conservation unit (Appendix Table A1 and A2 respectively).
+#' 
+#' ExpFac2 is calculated from the decades with the 'best escapement coverage'.
+#' See function for details on how we quantified this criteria based on the 
+#' number of indicator and non-indicator streams with at least one year of data
+#' in each decade.
 #' 
 #' \bold{Computing Expansion Factor 2}
 #' 
@@ -380,7 +385,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	decade.counts <- matrix(NA, nrow = length(unique(decadeDummyInd$decades)), ncol = dim(spawnersNonInd)[2])
 	rownames(decade.counts) <- unique(decadeDummyInd$decades)
 	for(i in 1:dim(spawnersNonInd)[2]) { #for each stream
-		decade.counts[ ,i] <- tapply(sampledSpawners[,i] != 0, decadeDummyInd$decades, sum)
+		decade.counts[ ,i] <- tapply(spawnersNonInd[,i] != 0, decadeDummyInd$decades, sum)
 	}
 	
 	atLeastOne <- apply(decade.counts > 0, 1, sum)
@@ -422,7 +427,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	
 	# --------------
 	# 2. Not every indicator stream monitored at least once in each decade
-	if((sum(decadeDummyInd$ref-decadeDummyInd$decadesFactor) != 0)){
+	if((sum(decadeDummyInd$ref - decadeDummyInd$decadesFactor) != 0)){
 		
 		# A. and number of non-indicator streams monitored is similar across decades
 		if(min(atLeastOne/max(atLeastOne)) >= 0.9){
@@ -438,9 +443,10 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 				ref.decade <- decadeDummyInd$ref 
 				code <- 7
 			# If the suggested reference decades don't match (i.e., diverging trends in coverage of
-			# indicator and non-indicator) throw an error - this seems unlikely to get to this point
+			# indicator and non-indicator) then use 8090s
 			} else {
-				stop("Reference decade for ExpFac2 could not be defined.")
+				ref.decade <- 8090
+				code <- 8
 			}
 		}
 	} # end if not every indicator stream is monitored at least once per decade
@@ -476,7 +482,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 		ExpFac2 <- numeric(length(unique(ref.decade)))
 		for(d in 1:length(unique(ref.decade))){ # For each reference decade
 			
-			years.to.use <- which(decadesFactor == unique(ref.decade)[d])
+			years.to.use <- which(decadeDummyInd$decadesFactor == unique(ref.decade)[d])
 			
 			# Average spawners in each indicator stream for the years.to.use
 			avgInd <- apply(spawnersInd[years.to.use, ], 2, sum) / apply(spawnersInd[years.to.use, ] != 0, 2, sum)
@@ -493,7 +499,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 		
 	}	
 	
-	return(list(ExpFac2[as.numeric(as.factor(ref.decade))], ref.decade, ExpFac2))
+	return(list(ExpFac2 = ExpFac2[as.numeric(as.factor(ref.decade))], ref.decade, ExpFac2, code = code))
 	
 		
 } # end	 ExpFactor2 function
