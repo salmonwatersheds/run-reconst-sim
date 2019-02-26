@@ -91,7 +91,11 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	a <- rnorm(nPop, simPar$a_mean, simPar$sigma_a)
 	
 	# Draw Smax
-	Smax <- c(rlnorm(simPar$nIndicator, simPar$logSmax_ind_mean, simPar$logSmax_ind_sd), rlnorm(simPar$nNonIndicator, simPar$logSmax_nonInd_mean, simPar$logSmax_nonInd_sd))
+	Smax <- c(
+		rlnorm(simPar$nIndicator, simPar$logSmax_ind_mean, simPar$logSmax_ind_sd), # Indicator streams
+		rlnorm(simPar$nNonIndicator, simPar$logSmax_nonInd_mean, simPar$logSmax_nonInd_sd) #Non-indicator
+		)
+	
 	# Check
 	if(length(Smax) != nPop) stop("Number of indicator and non-indicator streams does not match nPop.")
 	
@@ -176,14 +180,14 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	# Initialize spawners at 20% of Seq (Holt 2018 CSAS) 
 	# and recruitment error for first year
 	spawners[1:(simPar$gen + 2), ] <- 0.2 * a / b
-	phi[1,]<-0
+	phi[1,] <- 0
 	
 	# Loop over first 7 years for chum (par$gen + 2)
 	for (y in 1:(simPar$gen + 2)){ #first obsLag period necessary to generate recBY
 		dum <- rickerModel(S = spawners[y, ],
 											 a = a, 
 											 b = b, 
-											 error = rmvnorm(1, rep(-simPar$sigma_u^2 / 2, nPop), sigma = covMat),
+											 error = rmvnorm(1, rep(0, nPop), sigma = covMat), #-simPar$sigma_u^2 / 2 # No lognormal bias correction
 											 rho = simPar$rho,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
@@ -208,7 +212,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		dum <- rickerModel(S = spawners[y, ], 
 											 a = a, 
 											 b = b, 
-											 error = rmvnorm(1, rep(-simPar$sigma_u^2 / 2, nPop), sigma = covMat),
+											 error = rmvnorm(1, rep(0, nPop), sigma = covMat), #-simPar$sigma_u^2 / 2 # No lognormal bias correction
 											 rho = simPar$rho,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
@@ -228,7 +232,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	# Add lognormal observation error to all spawners
 	obsSpawners <- spawners[(simPar$gen + 3):nYears, ] * matrix(exp(
 		qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
-					simPar$obs_bias - simPar$sigma_obs^2 / 2, # Lognormal correction
+					simPar$obs_bias, #- simPar$sigma_obs^2 / 2, # No lognormal bias correction
 					simPar$sigma_obs)), 
 		nrow = simYears, ncol = nPop)
 	
@@ -277,7 +281,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	#_____
 	# Add error to observed catch for CU
 	obsCatch <- trueCatch[(simPar$gen + 3):nYears] * exp(qnorm(runif(simYears, 0.0001, 0.9999), 
-					simPar$catch_bias - simPar$sigma_obs^2 / 2, # Change this to zero???
+					simPar$catch_bias,# - simPar$sigma_obs^2 / 2, # No lognormal bias correction
 					simPar$sigma_catch))
 	
 	#_____
@@ -332,7 +336,8 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	#_____
 	# Benchmarks: true
 	trueData <- data.frame(S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
-	trueStatus <- assessPop(SR.pairs = trueData, gen = simPar$gen)
+	trueStatus.data <- assessPop(SR.pairs = trueData, gen = simPar$gen)
+	trueStatus.params <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b), gen = simPar$gen)
 	
 	# ****************************************************************************
 	# Two categories of partial application of the observation submodel:
@@ -376,20 +381,26 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	#-----------------------------------------------------------------------------
 	# Performance
 	#-----------------------------------------------------------------------------
+	# Base case: use true status derived from parameters for SR metric
+	trueStatus <- trueStatus.params 
 	
 	P <- perfStatus(trueStatus, obsStatus)
 	Pa <- perfStatus(trueStatus, obsStatusa)
 	Pb <- perfStatus(trueStatus, obsStatusb)
 	
+	# Also include true status derived from "true" data
+	P.data <- perfStatus(trueStatus.data, obsStatus)
+	Pa.data <- perfStatus(trueStatus.data, obsStatusa)
+	Pb.data <- perfStatus(trueStatus.data, obsStatusb)
 	#-----------------------------------------------------------------------------
 	# END
 	#-----------------------------------------------------------------------------
 	
 	return(list(
-		performance = list(P, Pa, Pb), 
-		status = list(true = trueStatus, obs = obsStatus, obsa = obsStatusa, obsb = obsStatusb),
+		performance = list(P, Pa, Pb, P.data, Pa.data, Pb.data), 
+		status = list(true.params = trueStatus.params, obs = obsStatus, obsa = obsStatusa, obsb = obsStatusb, true.data = trueStatus.data),
 		data = list(true = trueData, obs = obsData),
-		RickerPar = list(a = a, Smax = Smax)
+		RickerPar = list(a = a, b = b, Smax = Smax)
 	))
 	
 } # end recoverySim function
