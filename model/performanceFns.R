@@ -33,6 +33,8 @@
 
 perfStatus <- function(trueStatus, obsStatus) {
 	
+	currentMPE <- (obsStatus$current - trueStatus$current)/trueStatus$current
+	
 	benchMPE <- cbind(
 		(obsStatus$lowerBenchmark - trueStatus$lowerBenchmark)/trueStatus$lowerBenchmark, 
 		(obsStatus$upperBenchmark - trueStatus$upperBenchmark)/trueStatus$upperBenchmark)
@@ -60,6 +62,6 @@ perfStatus <- function(trueStatus, obsStatus) {
 		}
 	}
 	
-	return(list(MPE = benchMPE, statusDiff = statusDiff))
+	return(list(currentMPE = currentMPE, benchMPE = benchMPE, statusDiff = statusDiff))
 	
 }
