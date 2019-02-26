@@ -220,6 +220,9 @@ assessPop <- function(SR.pairs, gen) {
 #' @param SR.pairs A data frame containing S (total spawner abundance to the CU)
 #' and R (recruits to the CU by brood year corresponding to the number of 
 #' spawners in the S)
+#' @param SR.params A matrix with two columns, one for the productivity 
+#' parameter (a) and one for the density-dependence parameter (b), where rows
+#' are the different sub-populations within the CU
 #' @param gen The length of a generation (for calculating geometric-mean 
 #' spawners over most recent generation)
 #' @return Returns a list containing the status for SR and HS metrics
@@ -230,46 +233,60 @@ assessPop <- function(SR.pairs, gen) {
 #' @examples 
 #' 
 
-assessPop <- function(SR.pairs, gen) {
+assessTruePop <- function(SR.pairs, SR.params, gen) {
 	
 	S <- SR.pairs$S
 	R <- SR.pairs$R
+	nPop <- dim(SR.params)[1]
 	
 	# Calculate geometric mean spawners over most recent generation:
 	AvgS <- prod(tail(S, gen))^(1/gen)
 	
 	# Stock-recruit benchmarks
 	
-	# Reconstructed run (rr) to estimate Ricker a and b parameters:
-	rr <- data.frame(x = S, y = log(R/S)) 
-	# plot(rr$x, rr$y)
-	
-	fit <- lm(y ~ x, data = rr)
-	theta <- c(a = as.numeric(fit$coefficients[1]),
-						 b = - as.numeric(fit$coefficients[2]),
-						 sig = as.numeric(summary(fit)$sigma))
-	
 	# Upper SR benchmark (Smsy)
-	Smsy <- calcSmsy(a = theta[1], b = theta[2])
+	Smsy <- calcSmsy(a = SR.params[,1], b = SR.params[,2])
+	
+	# Check
+	if(sum(is.na(Smsy)) > 0){
+		stop("Error: NAs in Smsy for true benchmarks calculated from actual parameters.")
+	}
 	
 	# Lower SR benchmark (Sgen1)
 	# Start optimization at 20% of Smsy
-	Sgen1 <- calcSgen(Sgen.hat = 0.2*Smsy, theta = theta, Smsy = Smsy)
+	Sgen1 <- numeric(nPop)
+	for (i in 1:nPop) { # For each subpopulation, optimize Sgen1
+		Sgen1[i] <- calcSgen(
+			Sgen.hat = 0.2*Smsy[i], 
+			theta = c(
+				a = as.numeric(SR.params[i,1]), 
+				b = as.numeric(SR.params[i,2]), 
+				sig = 10^-10), 
+			Smsy = Smsy[i])
+	}
 	
-	statusSR <- assessMetric(current = AvgS, lower = Sgen1, upper = Smsy)
+	# Check
+	if(sum(is.na(Sgen1)) > 0){
+		stop("Error: NAs in Sgen1 for true benchmarks calculated from actual parameters.")
+	}
 	
-	# historic spawners benchmarks
+	statusSR <- assessMetric(current = AvgS, lower = sum(Sgen1), upper = sum(Smsy))
 	
-	lowerP <- quantile(S, 0.25)
-	upperP <- quantile(S, 0.75)
-	statusHS <- assessMetric(current = AvgS, lower = lowerP, upper = upperP)
+	# According to Holt et al. (2018) there is no "true" historic spawners status
+	# The only "true" benchmarks are based on underlying SR parameters
+	# # historic spawners benchmarks
+	# 
+	# lowerP <- quantile(S, 0.25)
+	# upperP <- quantile(S, 0.75)
+	# statusHS <- assessMetric(current = AvgS, lower = lowerP, upper = upperP)
 	
+	# Return status SR for comparison to observed SR and observed HS
 	return(list(
-		status = c(SR = statusSR[[1]], HS = statusHS[[1]]),
-		statusNum = c(SR = statusSR[[2]], HS = statusHS[[2]]),
+		status = c(SR = statusSR[[1]], HS = statusSR[[1]]),
+		statusNum = c(SR = statusSR[[2]], HS = statusSR[[2]]),
 		current = AvgS,
-		lowerBenchmark = c(SR = Sgen1, HS = lowerP),
-		upperBenchmark = c(SR = Smsy, HS = upperP)
+		lowerBenchmark = c(SR = sum(Sgen1), HS = sum(Sgen1)),
+		upperBenchmark = c(SR = sum(Smsy), HS = sum(Smsy))
 	))
 	
 }
