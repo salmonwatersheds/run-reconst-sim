@@ -397,8 +397,19 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	#-----------------------------------------------------------------------------
 	
 	return(list(
-		performance = list(P, Pa, Pb, P.data, Pa.data, Pb.data), 
-		status = list(true.params = trueStatus.params, obs = obsStatus, obsa = obsStatusa, obsb = obsStatusb, true.data = trueStatus.data),
+		performance = list(
+			trueParams = P, 
+			caseA = Pa, 
+			caseB = Pb, 
+			trueData = P.data, 
+			caseA.trueData = Pa.data, 
+			caseB.trueData = Pb.data), 
+		status = list(
+			trueParams = trueStatus.params, 
+			obs = obsStatus, 
+			obsA = obsStatusa, 
+			obsB = obsStatusb, 
+			trueData = trueStatus.data),
 		data = list(true = trueData, obs = obsData),
 		RickerPar = list(a = a, b = b, Smax = Smax)
 	))

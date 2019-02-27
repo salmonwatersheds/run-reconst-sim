@@ -5,7 +5,7 @@ Douglas-Gardner,0.03,6,27,35,62,23,0.851851852,15,131956,yellow,yellow,,green,57
 Hecate Lowlands,0.17,"3,4,5,6,7",41,100,141,23,0.56097561,32,83633,green,red,,,1,1
 Mussel-Kynock,0.2,"6,7",12,2,14,7,0.583333333,22%,127181,green,yellow,,,,
 Rivers Inlet,0,9,5,10,15,2,0.4,50,9874,red,yellow,,,,
-Smith Inlet,0,"9,10",5,6,11,3,0.6,50,23122,yellow,red,,,,
+Smith Inlet,0,"9,10",5,6,11,3,0.6,50,23122,yellow,red,,,0.285714286,
 Spiller-Fitz-Hugh-Burke,0.26,"7,8,9",28,41,69,15,0.535714286,32%,285700,green ,yellow,,,,
 Wannock,DD,,0,1,1,0,,0,DD,DD,DD,,,,
 AVERAGE,0.1,,14.7,23.6,,9.6,0.653061224,18.3,121045.7,,,,,,

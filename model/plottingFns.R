@@ -15,15 +15,19 @@ plotStatusDiff <- function(statusDiff){
 	# Create matrix for number of simulations with true status R, A, G (columns) 
 	# and observed status R, A, G (rows)
 	statusDiffMat <- matrix(NA, nrow = 3, ncol = 3, dimnames=list(c("R", "A", "G"), c("R", "A", "G")))
+	
 	statusDiffMat[1, 1] <- length(which(statusDiff == 3)) #/ nSim
 	statusDiffMat[2, 2] <- length(which(statusDiff == 2)) #/ nSim
 	statusDiffMat[3, 3] <- length(which(statusDiff == 1)) #/ nSim
-	statusDiffMat[2, 1] <- length(which(statusDiff == 4)) #/ nSim
-	statusDiffMat[3, 1] <- length(which(statusDiff == 5)) #/ nSim
-	statusDiffMat[1, 2] <- length(which(statusDiff == 6))
-	statusDiffMat[3, 2] <- length(which(statusDiff == 7))
-	statusDiffMat[1, 3] <- length(which(statusDiff == 8))
-	statusDiffMat[2, 3] <- length(which(statusDiff == 9))
+	
+	statusDiffMat[1, 2] <- length(which(statusDiff == 4)) #/ nSim
+	statusDiffMat[1, 3] <- length(which(statusDiff == 5)) #/ nSim
+	
+	statusDiffMat[2, 1] <- length(which(statusDiff == 6))
+	statusDiffMat[2, 3] <- length(which(statusDiff == 7))
+	
+	statusDiffMat[3, 1] <- length(which(statusDiff == 8))
+	statusDiffMat[3, 2] <- length(which(statusDiff == 9))
 	
 	# Plot percentages in each category
 	par(mar=c(4, 5, 2, 1))
@@ -38,7 +42,17 @@ plotStatusDiff <- function(statusDiff){
 	for(i in 1:3){
 		for(j in 1:3){
 			if(i == j) polygon(x = c(j, j+1, j+1, j), y = 4 - c(i , i , i-1, i-1), border = NA, col = statusCols[4-i])
-			text(j + 0.5, 4 - i + 0.5, paste(formatC(round(statusDiffMat[i,j]/length(statusDiff)*100, 1), 1, format="f"), "%"))
+			if(j < i){ # Risky misclassifications
+				fnt <- 2 
+				fntcol <- 1
+			}else if (j > i){ # Cautious misclassifications
+				fnt <- 1
+				fntcol <- grey(0.6)
+			} else {
+				fnt <- 1
+				fntcol <- 1
+			}
+			text(j + 0.5, 4 - i + 0.5, paste(formatC(round(statusDiffMat[i,j]/length(statusDiff)*100, 1), 1, format="f"), "%"), font=fnt, col=fntcol)
 			# text(j + 0.5, 4 - i + 0.5, statusDiffMat[i,j])
 		}
 	}

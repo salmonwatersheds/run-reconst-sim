@@ -73,7 +73,6 @@ abline(v = a_mean, lty=2, lwd=1.5)
 a_Dorner08 <- c(1.6, 1.32, 1.94)
 abline(v = a_Dorner08, col=2, lty=2)
 
-
 ###############################################################################
 # Residuals
 ###############################################################################
@@ -179,3 +178,90 @@ isSymmetric(covMat2)
 
 
 rmvnorm(1, rep(0, nPop), sigma = covMat2)
+
+###############################################################################
+# Density-dependence parameter
+###############################################################################
+
+# b = 1/Smax - Smax is unfished spawner abundance though...
+# What is the range of spawner abundances?
+# THe CU-level data really tell us nothing about this, since spawner abundances
+# are aggregated at the level of the CU. Need to look at the nuSEDS data.
+
+# THe following data are from the NCC Salmon Database from LGL
+# Downloaded from the GitHub folder nccdbv2/r-package/code-dev/output/ncc-streams/
+# production -> test_out.xlsx on Febraury 8, 2019
+
+nccEsc <- read.csv("data/nccdbv2_NCCStreamEscapement.csv")
+nccEsc <- subset(nccEsc, nccEsc$SPP == "CM" & is.element(nccEsc$CU_fname, c("CM::Douglas-Gardner", "CM::Bella Coola River-Late", "CM::Bella Coola-Dean Rivers", "CM::Hecate Lowlands", "CM::Mussel-Kynoch","CM::Rivers Inlet", "CM::Smith Inlet", "CM::Spiller-Fitz Hugh-Burke", "CM::Wannock")))
+
+# Look at escapement since 1954, when we started to get catch data
+nccEsc2 <- t(as.matrix(nccEsc[,90:152]))
+
+hist(log(nccEsc2), xlab="log(escapement)", yaxt="n", main="")
+axis(side=2, at=c(0, 1000, 2000), las=1)
+hist(log(nccEsc2[,which(nccEsc$IsIndicator == "Y")]), col="#FF000040", border=NA, add=TRUE)
+hist(log(nccEsc2[,which(nccEsc$IsIndicator == "N")]), col="#0000FF40", border=NA, add=TRUE)
+legend("topright", fill=c("#FF000040", "#0000FF40"), c("indicator", "non-indicator"))
+abline(v = mean(nccEsc2[,which(nccEsc$IsIndicator == "Y")]))
+
+#------------------------------------------------------------------------------
+# Max escapement per stream
+maxEsc <- apply(nccEsc2, 2, max, na.rm=TRUE)
+hist(log(maxEsc), main="", xlab=expression(log(max(S[obs]))), las=1)
+hist(log(maxEsc[which(nccEsc$Indicator == "Y")]), col="#FF000040", border=NA, add=TRUE)
+hist(log(maxEsc[which(nccEsc$Indicator == "N")]), col="#0000FF40", border=NA, add=TRUE)
+abline(v = mean(log(maxEsc[which(nccEsc$Indicator == "Y")])), col=2, lwd=2)
+abline(v = mean(log(maxEsc[which(nccEsc$Indicator == "N")]), na.rm=TRUE), col=4, lwd=2)
+
+# Max spawner abundance for indicator and non-indicator
+avgSmax <- c(mean(log(maxEsc[which(nccEsc$Indicator == "Y")])), mean(log(maxEsc[which(nccEsc$IsIndicator == "N")]), na.rm=TRUE))
+sdSmax <- c(sd(log(maxEsc[which(nccEsc$Indicator == "Y")])), sd(log(maxEsc[which(nccEsc$IsIndicator == "N")]), na.rm=TRUE))
+
+x <- seq(0, 14, 0.1)
+lines(x, dnorm(x, avgSmax[1], sdSmax[1])*length(maxEsc[which(nccEsc$Indicator == "Y")]), col=2, lty=2)
+lines(x, dnorm(x, avgSmax[2], sdSmax[2])*sum(is.na(maxEsc[which(nccEsc$IsIndicator == "N")])==FALSE), col=4, lty=2)
+legend("topleft", fill=c(2,4), c("indicator", "non-indicator"), bty="n")
+
+text(9.5, 80, expression(mu == 9.1), col=2, adj=0)
+text(9.5, 70, expression(sigma == 1.38), col=2, adj=0)
+text(5.5, 80, expression(mu == 7.2), col=4, adj=0)
+text(5.5, 70, expression(sigma == 2.07), col=4, adj=0)
+
+sum(is.na(maxEsc[which(nccEsc$Indicator == "Y")])==FALSE)
+sum(is.na(maxEsc[which(nccEsc$Indicator == "N")])==FALSE)
+
+# 
+Smax <- rlnorm(200, avgSmax[1], sdSmax[1])
+mean(log(Smax))
+sd(log(Smax))
+
+hist(log(Smax), col="#00FF0060", border=NA, add=TRUE)
+
+#------------------------------------------------------------------------------
+# Mean escapement per stream
+meanEsc <- apply(nccEsc2, 2, mean, na.rm=TRUE)
+hist(log(meanEsc), main="", xlab="log(Smax)")
+hist(log(meanEsc[which(nccEsc$Indicator == "Y")]), col="#FF000040", border=NA, add=TRUE)
+hist(log(meanEsc[which(nccEsc$Indicator == "N")]), col="#0000FF40", border=NA, add=TRUE)
+abline(v = mean(log(meanEsc[which(nccEsc$Indicator == "Y")])), col=2, lwd=2)
+abline(v = mean(log(meanEsc[which(nccEsc$Indicator == "N")]), na.rm=TRUE), col=4, lwd=2)
+
+# Max spawner abundance for indicator and non-indicator
+avgSmean <- c(mean(log(meanEsc[which(nccEsc$Indicator == "Y")])), mean(log(maxEsc[which(nccEsc$IsIndicator == "N")]), na.rm=TRUE))
+sdSmean <- c(sd(log(meanEsc[which(nccEsc$Indicator == "Y")])), sd(log(maxEsc[which(nccEsc$IsIndicator == "N")]), na.rm=TRUE))
+
+x <- seq(0, 14, 0.1)
+lines(x, dnorm(x, avgSmean[1], sdSmean[1])*100, col=2, lty=2)
+lines(x, dnorm(x, avgSmean[2], sdSmean[2])*100, col=4, lty=2)
+legend("topleft", fill=c(2,4), c("indicator", "non-indicator"), bty="n")
+
+sum(is.na(maxEsc[which(nccEsc$Indicator == "Y")])==FALSE)
+sum(is.na(maxEsc[which(nccEsc$Indicator == "N")])==FALSE)
+
+# 
+Smax <- rlnorm(200, avgSmax[1], sdSmax[1])
+mean(log(Smax))
+sd(log(Smax))
+
+hist(log(Smax), col="#00FF0060", border=NA, add=TRUE)
