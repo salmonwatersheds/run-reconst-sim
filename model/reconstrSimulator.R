@@ -260,7 +260,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	nIndicatorMonitored <- apply(z[,1:simPar$nIndicator] == 1, 1, sum)
 	if(length(which(nIndicatorMonitored == 0)) > 0){
 		# Randomly choose one indicator stream to be monitored for each year that has none monitored
-		z[cbind(which(nIndicatorMonitored == 0), sample(1:simPar$nIndicator, size = length(which(nIndicatorMonitored == 0))))] <- 1
+		z[cbind(which(nIndicatorMonitored == 0), sample(1:simPar$nIndicator, size = length(which(nIndicatorMonitored == 0)), replace = TRUE))] <- 1
 	}
 	
 	
