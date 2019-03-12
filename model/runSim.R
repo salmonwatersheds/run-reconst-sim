@@ -18,7 +18,7 @@ source("model/plottingFns.R")
 #Temporary inputs
 # here <- here::here
 simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
-
+simPar <- simPar[simPar$scenario == "base",]
 # set.seed(987) #a1
 # # set.seed(98567) #a2
 # # set.seed(6123478) #a3

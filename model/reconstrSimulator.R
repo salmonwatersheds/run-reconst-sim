@@ -114,13 +114,20 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		}
 	
 	#_____
-	# Calculate realized harvest rates (assumed constant across subpopulations)
-	
-	harvestRate <- realizedHarvestRate(
-		targetHarvest = simPar$targetHarvest, 
-		sigmaHarvest = simPar$sigma_harvest,
-		nYears = nYears, 
-		errorType = "beta")
+	# If there is a fixed target harvest rate, can calculate
+	# realized harvest rates (assumed constant across subpopulations)
+	# outside of population dynamics loop
+	if(simPar$harvContRule == "fixedER"){
+		harvestRate <- realizedHarvestRate(
+			targetHarvest = simPar$targetHarvest, 
+			sigmaHarvest = simPar$sigma_harvest,
+			nYears = nYears, 
+			errorType = "beta")
+		targetHarvest <- c(rep(0, nYears - simPar$simYears), rep(simPar$targetHarvest, simPar$simYears))
+	} else {
+		targetHarvest <- c(rep(0, nYears - simPar$simYears), rep(NA, simPar$simYears))
+		harvestRate <- numeric(nYears)
+	}
 	
 	#_____
 	# Calculate covMat: covariance matrix for recruitment residuals
@@ -205,6 +212,16 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		# Sum return from recruitment t-2 to t-6 years ago * ppn age at return
 		recruitsRY[y, ] <- ppnAge[cbind(y - ages, 1:simPar$gen)] %*% recruitsBY[y - ages,]
 		
+		# If using variable harvest rate, calculate targetHarvest based on true total return
+		if(simPar$harvContRule == "variableER"){
+			targetHarvest[y] <- simPar$maxHarvest * (1 - exp(simPar$d * (simPar$m - sum(recruitsRY[y, ]))))
+			harvestRate[y] <- realizedHarvestRate(
+				targetHarvest = targetHarvest[y], 
+				sigmaHarvest = simPar$sigma_harvest,
+				nYears = 1, 
+				errorType = "beta")
+			
+		}
 		spawners[y, ] <- (1 - harvestRate[y]) * recruitsRY[y, ]
 		trueCatch[y] <- sum(harvestRate[y] * recruitsRY[y, ])
 		
