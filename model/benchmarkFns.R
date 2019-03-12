@@ -191,12 +191,13 @@ assessPop <- function(SR.pairs, gen) {
 	# Start optimization at 20% of Smsy
 	Sgen1 <- calcSgen(Sgen.hat = 0.2*Smsy, theta = theta, Smsy = Smsy)
 	
-	statusSR <- assessMetric(current = AvgS, lower = Sgen1, upper = Smsy)
+	# CHanged upper benchmark to 80% Smsy
+	statusSR <- assessMetric(current = AvgS, lower = Sgen1, upper = 0.8*Smsy)
 	
 	# historic spawners benchmarks
-	
+	# Changed upper benchmark to 50th percentile
 	lowerP <- quantile(S, 0.25)
-	upperP <- quantile(S, 0.75)
+	upperP <- quantile(S, 0.5)
 	statusHS <- assessMetric(current = AvgS, lower = lowerP, upper = upperP)
 	
 	return(list(
@@ -270,7 +271,7 @@ assessTruePop <- function(SR.pairs, SR.params, gen) {
 		stop("Error: NAs in Sgen1 for true benchmarks calculated from actual parameters.")
 	}
 	
-	statusSR <- assessMetric(current = AvgS, lower = sum(Sgen1), upper = sum(Smsy))
+	statusSR <- assessMetric(current = AvgS, lower = sum(Sgen1), upper = 0.8*sum(Smsy))
 	
 	# According to Holt et al. (2018) there is no "true" historic spawners status
 	# The only "true" benchmarks are based on underlying SR parameters
