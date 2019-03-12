@@ -45,6 +45,7 @@ Rplots.pdf
 
 # large datasets
 data/NUSEDS_20190117.csv
+data/NCC_chum_streams_SR_data.csv
 
 # don't upload my workspaces with results - too large
 workspaces
