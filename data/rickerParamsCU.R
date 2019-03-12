@@ -11,7 +11,7 @@ library(corpcor)
 CU_names <- read.csv("data/CentralCoastChum_CUs.csv")
 CU_names <- CU_names[,1]
 
-datSR <- read.csv("data/NCC_chum_streams_SR_data.csv")
+datSR <- read.csv("data/PSE_chumRecruitsPerSpawner.csv")
 datSR <- subset(datSR, is.element(datSR$location, CU_names))
 
 # What are the central coast chum CU names?
