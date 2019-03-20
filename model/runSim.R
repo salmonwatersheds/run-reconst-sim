@@ -19,26 +19,6 @@ source("model/plottingFns.R")
 # here <- here::here
 simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
 simPar <- simPar[simPar$scenario == "base",]
-# set.seed(987) #a1
-# # set.seed(98567) #a2
-# # set.seed(6123478) #a3
-# 
-# a <- rnorm(simPar$nPop, simPar$a_mean, simPar$sigma_a)
-
-# Plot three different "draws" of a parameter. Does it make a difference for performace results?
-# par(mfrow=c(1,1), mar=c(4,4,2,1))
-# aRange <- seq(1, 2, 0.02)
-# plot(aRange, dnorm(aRange, simPar$a_mean, simPar$sigma_a), "l", las=1, ylab="Density", xlab="Productivity parameter (a)", bty="l")
-# points(a1, rep(0, simPar$nPop), col=2, pch="I")
-# points(a2, rep(0.15, simPar$nPop), col=3, pch="I")
-# points(a3, rep(0.3, simPar$nPop), col=4, pch="I")
-# legend("topright", pch="I", col=c(2:4), bty="n", c("First draw (a1)", "Second draw (a2)", "Third draw (a3)"))
-
-# # Which is faster, rbinom or sample?
-# n <- 10^6
-# system.time(sample(c(0,1), size = n, replace = TRUE, prob = c(0.4, 0.6)))
-# system.time(rbinom(n, size = 1, prob = 0.6))
-# # Sample is clearly faster
 
 ###############################################################################
 # How many MC simulations are needed??
@@ -152,21 +132,12 @@ for(k in 1:nChains) lines(c(1:nSim), cumMetric[[i]][, k], col=k, lwd=0.8)
 # Base case simulations
 ###############################################################################
 
-nSim <- 5000
+nSim <- 1000
 
-a_mean <- c(0.4, 1.4, 2.4) # range for CCC = 1.3 - 1.5
-targetHarvest <- c(0.10, 0.35, 0.80)
-baseScen <- cbind(a_mean = rep(a_mean, each = length(targetHarvest)), targetHarvest = rep(targetHarvest, length(a_mean)))
+a_mean <- c(0.77, 1.4, 1.97) 
+# targetHarvest <- c(0.10, 0.35, 0.80)
 
-simPar_base <- list(); length(simPar_base) <- (dim(baseScen)[1])
-for (i in 1:(dim(baseScen)[1])) {
-	simPar_base[[i]] <- simPar
-	simPar_base[[i]]$a_mean <- baseScen[i,1]
-	simPar_base[[i]]$targetHarvest <- baseScen[i,2]
-	
-}
-
-out_base <- runSensitivity(basePar = simPar_base, sensitivity = NULL, nSim = nSim, nCores = 9, multiPar = TRUE)
+out_base <- runSensitivity(basePar = simPar, sensitivity = list("a_mean", a_mean), nSim = nSim, nCores = 3, multiPar = FALSE)
 
 time_base <- out_base[[2]]
 out_base <- out_base[[1]]
