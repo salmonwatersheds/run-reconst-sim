@@ -158,10 +158,78 @@ realizedHarvestRate <- function(targetHarvest, sigmaHarvest, nYears = length(tar
 	#-----------------------------
 	# BETA error
 	if(errorType == "beta"){
+		
 		beta1 <- (targetHarvest^2 - targetHarvest^3 - sigmaHarvest^2*targetHarvest)/(sigmaHarvest^2)
 		beta2 <- (targetHarvest * (1 - targetHarvest)^2 - sigmaHarvest^2*(1 - targetHarvest))/(sigmaHarvest^2)
+		
 		harvestRate <- rbeta(n = nYears, shape1 = beta1, shape2 = beta2)
 		
+		# BETA CHECK #1:
+		# Beta distribution requires shape parameters > 0. If this is violated, then
+		# the above harvestRate will have NaNs. Check and fix:
+		if(length(which(beta1 <= 0 & beta2 <= 0)) > 0){
+			
+			# For beta1, beta2 > 0, we must satisfy
+			# targetHarvest * (1 - targetHarvest) > sigmaHarvest^2
+			# Calculate threshold targetHarvest for given sigmaHarvest:
+			tH <- seq(0, 1, 0.0001)
+			unacceptable <- tH[which(tH*(1-tH) <= sigmaHarvest^2)]
+			unacceptableInd <- which(round(diff(unacceptable), 3) > 0.0001)
+			thresh <- unacceptable[c(unacceptableInd, unacceptableInd+1)]
+			# The acceptable range is just inside the unacceptable
+			thresh <- c(thresh[1] + 0.0001, thresh[2] - 0.0001)
+			
+			# For each violation of the above rule
+			for(j in which(beta1 <= 0 & beta2 <=0)){ 
+				
+				# 1) If targetHarvest[j] is closer to zero than one:
+				if(abs(diff(c(targetHarvest[j], 0))) < abs(diff(c(targetHarvest[j], 1)))){
+					
+					# a) If target harvest is closer to zero than threshold, 
+					if(abs(diff(c(targetHarvest[j], 0))) <= abs(diff(c(targetHarvest[j], thresh[1])))){
+						harvestRate[j] <- 0 # Choose realized harvest rate = 0
+					} else { # b) If target harvest rate is closer to threshold, draw from that
+						harvestRate[j] <- rbeta(n = 1, shape1 = (thresh[1]^2 - thresh[1]^3 - sigmaHarvest^2*thresh[1])/(sigmaHarvest^2), shape2 = (thresh[1] * (1 - thresh[1])^2 - sigmaHarvest^2*(1 - thresh[1]))/(sigmaHarvest^2))
+					}
+					
+			# 2) If targetHarvest[j] is closer to one than zero:		
+				} else {
+					# a) If target harvest is closer to one than threshold, 
+					if(abs(diff(c(targetHarvest[j], 1))) <= abs(diff(c(targetHarvest[j], thresh[2])))){
+						harvestRate[j] <- 1 # Choose realized harvest rate = 0
+					} else { # b) If target harvest rate is closer to threshold, draw from that
+						harvestRate[j] <- rbeta(n = 1, shape1 = (thresh[2]^2 - thresh[2]^3 - sigmaHarvest^2*thresh[2])/(sigmaHarvest^2), shape2 = (thresh[2] * (1 - thresh[2])^2 - sigmaHarvest^2*(1 - thresh[2]))/(sigmaHarvest^2))
+					}
+			}
+			}
+		} # END BETA CHECK #1
+		
+		# BETA CHECK #2
+		# The beta distribution is bimodal under certain conditions. If the realized 
+		# harvest rate is much different from the target, then re-draw
+		bimodalInd <- which(targetHarvest^2 *(1 - targetHarvest)/(1 + targetHarvest) < sigmaHarvest ^ 2 & targetHarvest * (1-targetHarvest)^2 / (2-targetHarvest)	< sigmaHarvest^2)
+		
+		# If there are instances where targetHarvest indicates we're in the bimodal zone
+		if(length(bimodalInd) > 0){
+			
+			# If we are in the bimodal range and the harvestRate is > 0.5 different
+			# from the targetHarvest, then assume it's a error to to bimodality (wrongEnd)
+			wrongEnd <- which(abs(harvestRate[bimodalInd]-targetHarvest[bimodalInd]) > 0.5)
+			
+			while(length(wrongEnd) > 0){
+				# Redraw offending bimodal values
+				harvestRate[bimodalInd[wrongEnd]] <- rbeta(n = length(wrongEnd), shape1 = beta1[bimodalInd[wrongEnd]], shape2 = beta2[bimodalInd[wrongEnd]])
+
+				# Re-calculate if there are any that come from opposite ends
+				wrongEnd <- which(abs(harvestRate[bimodalInd]-targetHarvest[bimodalInd]) > 0.5)
+			} 
+		} # END BETA CHECK #2
+			
+	# Finally, check that there are no NaNs from something else I missed!
+		if(sum(is.na(harvestRate)) > 0){
+			stop(paste("Realized harvest still contains NAs for targetHarvest = ", targetHarvest[is.na(harvestRate)]))
+		}
+		 
 	#-----------------------------
 	# NORMAL error
 	} else if (errorType == "normal"){
