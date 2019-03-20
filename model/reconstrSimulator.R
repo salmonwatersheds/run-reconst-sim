@@ -185,8 +185,9 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	#_____
 	
 	# Initialize spawners at 20% of Seq (Holt 2018 CSAS) 
+	# Changed to 20% Smax to avoid negative numbers if a < 0
 	# and recruitment error for first year
-	spawners[1:(simPar$gen + 2), ] <- 0.2 * a / b
+	spawners[1:(simPar$gen + 2), ] <- 0.2 * 1 / b
 	phi[1,] <- 0
 	
 	# Loop over first 7 years for chum (par$gen + 2)
@@ -198,7 +199,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 											 rho = simPar$rho,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
-											 extinctThresh = 0)
+											 extinctThresh = 0)#simPar$extinctThresh)
 		recruitsBY[y, ] <- dum[[1]]
 		phi[y+1, ] <- dum[[2]]
 	}
@@ -220,8 +221,8 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 				sigmaHarvest = simPar$sigma_harvest,
 				nYears = 1, 
 				errorType = "beta")
-			
 		}
+		
 		spawners[y, ] <- (1 - harvestRate[y]) * recruitsRY[y, ]
 		trueCatch[y] <- sum(harvestRate[y] * recruitsRY[y, ])
 		
@@ -233,7 +234,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 											 rho = simPar$rho,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
-											 extinctThresh = 0)
+											 extinctThresh = 0)#simPar$extinctThresh)
 		
 		recruitsBY[y, ] <- dum[[1]]
 		phi[y+1, ] <- dum[[2]]
@@ -352,9 +353,11 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	
 	#_____
 	# Benchmarks: true
-	trueData <- data.frame(S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
-	trueStatus.data <- assessPop(SR.pairs = trueData, gen = simPar$gen)
-	trueStatus.params <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b), gen = simPar$gen)
+	trueData <- data.frame(
+		S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), 
+		R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
+	# trueStatus.data <- assessPop(SR.pairs = trueData, gen = simPar$gen)
+	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b), gen = simPar$gen)
 	
 	# ****************************************************************************
 	# Two categories of partial application of the observation submodel:
@@ -399,16 +402,16 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	# Performance
 	#-----------------------------------------------------------------------------
 	# Base case: use true status derived from parameters for SR metric
-	trueStatus <- trueStatus.params 
+	# trueStatus <- trueStatus.params 
 	
 	P <- perfStatus(trueStatus, obsStatus)
 	Pa <- perfStatus(trueStatus, obsStatusa)
 	Pb <- perfStatus(trueStatus, obsStatusb)
 	
-	# Also include true status derived from "true" data
-	P.data <- perfStatus(trueStatus.data, obsStatus)
-	Pa.data <- perfStatus(trueStatus.data, obsStatusa)
-	Pb.data <- perfStatus(trueStatus.data, obsStatusb)
+	# # Also include true status derived from "true" data
+	# P.data <- perfStatus(trueStatus.data, obsStatus)
+	# Pa.data <- perfStatus(trueStatus.data, obsStatusa)
+	# Pb.data <- perfStatus(trueStatus.data, obsStatusb)
 	#-----------------------------------------------------------------------------
 	# END
 	#-----------------------------------------------------------------------------
@@ -417,18 +420,19 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		performance = list(
 			trueParams = P, 
 			caseA = Pa, 
-			caseB = Pb, 
-			trueData = P.data, 
-			caseA.trueData = Pa.data, 
-			caseB.trueData = Pb.data), 
+			caseB = Pb),
 		status = list(
-			trueParams = trueStatus.params, 
+			true = trueStatus, 
 			obs = obsStatus, 
 			obsA = obsStatusa, 
-			obsB = obsStatusb, 
-			trueData = trueStatus.data),
+			obsB = obsStatusb),
 		data = list(true = trueData, obs = obsData),
-		RickerPar = list(a = a, b = b, Smax = Smax)
+		RickerPar = list(a = a, b = b, Smax = Smax),
+		trueHarvest = data.frame(
+			targetHarvest = targetHarvest[(simPar$gen + 3):nYears], 
+			realizedHarvest = harvestRate[(simPar$gen + 3):nYears], 
+			trueCatch = trueCatch[(simPar$gen + 3):nYears],
+			obsCatch = obsCatch[(simPar$gen + 3):nYears])
 	))
 	
 } # end recoverySim function
