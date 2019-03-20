@@ -40,15 +40,15 @@ calcSmsy <- function(a, b) {
 
 Sgen.optim <- function (Sgen.hat, theta, Smsy) {
 	# Add warning and adjustment for non-zero spawner abundances
-	# if(any(s < 0.00001)){
-	# 	s[s < 0.00001] <- 0.0001
-	# 	# print(c("s abundance must be > 0. Negative values replaced w/ small positive"))
-	# }
+	if(any(Sgen.hat < 0.00001)){
+		Sgen.hat[Sgen.hat < 0.00001] <- 0.0001
+		print(c("Sgen.hat abundance must be > 0. Negative values replaced w/ small positive"))
+	}
 	
-	# if(any(s.msy < 0.00001)){
-	# 	s.msy[s.msy < 0.00001] <- 0.0001
-	# 	# print(c("s.msy must be > 0. Negative values replaced w/ small positive"))
-	# }
+	if(any(Smsy < 0.00001)){
+		Smsy[Smsy < 0.00001] <- 0.0001
+		print(c("Smsy must be > 0. Negative values replaced w/ small positive"))
+	}
 	
 	a <- theta[1]
 	b <- theta[2]
