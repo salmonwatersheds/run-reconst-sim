@@ -87,18 +87,45 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	ages <- 2:6
 	
 	#_____
-	# Draw productivity and density dependence parameters
+	# Draw productivity parameters
 	a <- rnorm(nPop, simPar$a_mean, simPar$sigma_a)
 	
-	# Draw Smax
-	Smax <- c(
+	#_____
+	# Determine density dependence parameter and change over time
+	# Draw Smax - spawner abundance that yields maximum recruitment (above which there's neg dens dep)
+	Smax.initial <- c(
 		rlnorm(simPar$nIndicator, simPar$logSmax_ind_mean, simPar$logSmax_ind_sd), # Indicator streams
 		rlnorm(simPar$nNonIndicator, simPar$logSmax_nonInd_mean, simPar$logSmax_nonInd_sd) #Non-indicator
 		)
 	
 	# Check
-	if(length(Smax) != nPop) stop("Number of indicator and non-indicator streams does not match nPop.")
+	if(length(Smax.initial) != nPop) stop("Number of indicator and non-indicator streams does not match nPop.")
 	
+	# Create matrix of annual capacity, assuming no changes over time
+	Smax <- matrix(rep(Smax.initial, each = nYears), nrow = nYears, ncol = nPop, byrow = FALSE)
+	
+	# If a decline in Smax is to be included, alter the capacity of affected subpopulations
+	if(simPar$greenHab < 100){
+		if(sum(c(simPar$greenHab, simPar$amberHab, simPar$redHab)) != 100){
+			stop("Habitat status categories sum to > 100%")
+		}
+		dum <- rmultinom(n = nPop, size = 1, prob = c(simPar$greenHab, simPar$amberHab, simPar$redHab) / 100)
+		habitatCategory <- t(dum) %*% matrix(c(1:3), nrow=3)
+		SmaxDecl <- matrix(NA, nrow = nYears, ncol = nPop)
+		for(j in 1:nPop){
+			if(habitatCategory[j] == 1){
+				SmaxDecl[, j] <- 1
+			} else if (habitatCategory[j] == 2){
+				SmaxDecl[, j] <- c(rep(1, (simPar$gen + 2)), seq(1, runif(1, 0.50, 0.75), length.out = simYears))
+			} else if (habitatCategory[j] == 3){
+				SmaxDecl[, j] <- c(rep(1, (simPar$gen + 2)), seq(1, runif(1, 0.25, 0.50), length.out = simYears))
+			}
+		} # end nPop
+		# Calculate Smax incorporating decline
+		Smax <- Smax * SmaxDecl
+	} # end if
+	
+	# Calculate density dependence parameter as the inverse of spawner abundance for max. recruitment
 	b <- 1/Smax
 	
 	#_____
@@ -193,8 +220,8 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	# Loop over first 7 years for chum (par$gen + 2)
 	for (y in 1:(simPar$gen + 2)){ #first obsLag period necessary to generate recBY
 		dum <- rickerModel(S = spawners[y, ],
-											 a = a, 
-											 b = b, 
+											 a = a, # constant productivity
+											 b = b[y, ], # time-varying capacity
 											 error = rmvnorm(1, rep(0, nPop), sigma = covMat), #-simPar$sigma_u^2 / 2 # No lognormal bias correction
 											 rho = simPar$rho,
 											 phi_last = phi[y, ],
@@ -229,7 +256,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		# Apply Ricker model to calculate recruits
 		dum <- rickerModel(S = spawners[y, ], 
 											 a = a, 
-											 b = b, 
+											 b = b[y, ], 
 											 error = rmvnorm(1, rep(0, nPop), sigma = covMat), #-simPar$sigma_u^2 / 2 # No lognormal bias correction
 											 rho = simPar$rho,
 											 phi_last = phi[y, ],
