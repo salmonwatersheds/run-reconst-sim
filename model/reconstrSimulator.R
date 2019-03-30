@@ -69,7 +69,7 @@
 #' @export
 
 
-reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
+reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCases = FALSE) {
 	
 	# If a seed for simulation is provided, then set the seed for the simulation here
 	if(length(seed) == 1){ 
@@ -144,7 +144,9 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	# If there is a fixed target harvest rate, can calculate
 	# realized harvest rates (assumed constant across subpopulations)
 	# outside of population dynamics loop
-	if(simPar$harvContRule == "fixedER"){
+	if(simPar$harvContRule == "noError"){
+		harvestRate <- rep(simPar$targetHarvest, nYears)
+	} else if(simPar$harvContRule == "fixedER"){
 		harvestRate <- realizedHarvestRate(
 			targetHarvest = simPar$targetHarvest, 
 			sigmaHarvest = simPar$sigma_harvest,
@@ -214,7 +216,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	# Initialize spawners at 20% of Seq (Holt 2018 CSAS) 
 	# Changed to 20% Smax to avoid negative numbers if a < 0
 	# and recruitment error for first year
-	spawners[1:(simPar$gen + 2), ] <- 0.2 * 1 / b
+	spawners[1:(simPar$gen + 2), ] <- 0.2 * 1 / b[1:(simPar$gen + 2), ]
 	phi[1,] <- 0
 	
 	# Loop over first 7 years for chum (par$gen + 2)
@@ -242,7 +244,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 		
 		# If using variable harvest rate, calculate targetHarvest based on true total return
 		if(simPar$harvContRule == "variableER"){
-			targetHarvest[y] <- simPar$maxHarvest * (1 - exp(simPar$d * (simPar$m - sum(recruitsRY[y, ]))))
+			targetHarvest[y] <- round(simPar$maxHarvest * (1 - exp(simPar$d * (simPar$m - sum(recruitsRY[y, ])))), 4)
 			harvestRate[y] <- realizedHarvestRate(
 				targetHarvest = targetHarvest[y], 
 				sigmaHarvest = simPar$sigma_harvest,
@@ -319,10 +321,6 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	
 	sampledSpawners <- z * obsSpawners # 0 = not monitored
 	
-	# Include incomplete monitoring of spawners observed without a bias
-	# to separate out effects of Expansion Factor I and II without III
-	sampledSpawners_noBias <- z * spawners[(simPar$gen + 3):nYears, ]
-	
 	#_____
 	# Add error to observed catch for CU
 	obsCatch <- trueCatch[(simPar$gen + 3):nYears] * exp(qnorm(runif(simYears, 0.0001, 0.9999), 
@@ -383,14 +381,32 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 	trueData <- data.frame(
 		S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), 
 		R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
+	
 	# trueStatus.data <- assessPop(SR.pairs = trueData, gen = simPar$gen)
-	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b), gen = simPar$gen)
+	# Q: In assessing true status under a decline in capacity, set a nominal period 
+	# or assess based on current SR parameters?
+	# A: Use nominal period that reflects initial capacity parameters to avoid shifting
+	# baselines.
+	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = simPar$gen)
+	
+	#-----------------------------------------------------------------------------
+	# Performance
+	#-----------------------------------------------------------------------------
+	# Base case: use true status derived from parameters for SR metric
+	# trueStatus <- trueStatus.params 
+	
+	P <- perfStatus(trueStatus, obsStatus)
 	
 	# ****************************************************************************
-	# Two categories of partial application of the observation submodel:
-	# a) Perfect observation but incomplete coverage (separates out effect
-	#		 of Expansion Factors I and II)
-			dumExp1a <- ExpFactor1(sampledSpawners = sampledSpawners_noBias[, 1:simPar$nIndicator])
+	if(returnObsCases == TRUE){
+		# Two categories of partial application of the observation submodel:
+		# a) Perfect observation but incomplete coverage (separates out effect
+		#		 of Expansion Factors I and II)
+		# Include incomplete monitoring of spawners observed without a bias
+		# to separate out effects of Expansion Factor I and II without III
+		sampledSpawners_noBias <- z * spawners[(simPar$gen + 3):nYears, ]
+		
+		dumExp1a <- ExpFactor1(sampledSpawners = sampledSpawners_noBias[, 1:simPar$nIndicator])
 			spawnersExp1a <- dumExp1a[[1]] * apply(sampledSpawners_noBias[, 1:simPar$nIndicator], 1, sum)
 			
 			dumExp2a <- ExpFactor2(
@@ -422,44 +438,50 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL) {
 			obsDatab <- data.frame(S = spawnersExp3b, R = obsRecruitsBYb)
 			obsStatusb <- assessPop(SR.pairs = obsDatab, gen = simPar$gen)
 			
+			# Performance 
+			Pa <- perfStatus(trueStatus, obsStatusa)
+			Pb <- perfStatus(trueStatus, obsStatusb)
+			
+	} # end ObsCases
 	# ****************************************************************************
 	
-	
-	#-----------------------------------------------------------------------------
-	# Performance
-	#-----------------------------------------------------------------------------
-	# Base case: use true status derived from parameters for SR metric
-	# trueStatus <- trueStatus.params 
-	
-	P <- perfStatus(trueStatus, obsStatus)
-	Pa <- perfStatus(trueStatus, obsStatusa)
-	Pb <- perfStatus(trueStatus, obsStatusb)
-	
-	# # Also include true status derived from "true" data
-	# P.data <- perfStatus(trueStatus.data, obsStatus)
-	# Pa.data <- perfStatus(trueStatus.data, obsStatusa)
-	# Pb.data <- perfStatus(trueStatus.data, obsStatusb)
 	#-----------------------------------------------------------------------------
 	# END
 	#-----------------------------------------------------------------------------
 	
-	return(list(
-		performance = list(
-			trueParams = P, 
-			caseA = Pa, 
-			caseB = Pb),
-		status = list(
-			true = trueStatus, 
-			obs = obsStatus, 
-			obsA = obsStatusa, 
-			obsB = obsStatusb),
-		data = list(true = trueData, obs = obsData),
-		RickerPar = list(a = a, b = b, Smax = Smax),
-		trueHarvest = data.frame(
-			targetHarvest = targetHarvest[(simPar$gen + 3):nYears], 
-			realizedHarvest = harvestRate[(simPar$gen + 3):nYears], 
-			trueCatch = trueCatch[(simPar$gen + 3):nYears],
-			obsCatch = obsCatch[(simPar$gen + 3):nYears])
-	))
+	if(returnObsCases == TRUE){
+		return(list(
+			performance = list(
+				trueParams = P, 
+				caseA = Pa, 
+				caseB = Pb),
+			status = list(
+				true = trueStatus, 
+				obs = obsStatus, 
+				obsA = obsStatusa, 
+				obsB = obsStatusb),
+			data = list(true = trueData, obs = obsData),
+			RickerPar = list(a = a, b = b, Smax = Smax),
+			trueHarvest = data.frame(
+				targetHarvest = targetHarvest[(simPar$gen + 3):nYears], 
+				realizedHarvest = harvestRate[(simPar$gen + 3):nYears], 
+				trueCatch = trueCatch[(simPar$gen + 3):nYears],
+				obsCatch = obsCatch[(simPar$gen + 3):nYears])
+		))
+	} else {
+		return(list(
+			performance = P,
+			status = list(
+				true = trueStatus, 
+				obs = obsStatus),
+			data = list(true = trueData, obs = obsData),
+			RickerPar = list(a = a, b = b, Smax = Smax),
+			trueHarvest = data.frame(
+				targetHarvest = targetHarvest[(simPar$gen + 3):nYears], 
+				realizedHarvest = harvestRate[(simPar$gen + 3):nYears], 
+				trueCatch = trueCatch[(simPar$gen + 3):nYears],
+				obsCatch = obsCatch[(simPar$gen + 3):nYears])
+		))
+	}
 	
 } # end recoverySim function
