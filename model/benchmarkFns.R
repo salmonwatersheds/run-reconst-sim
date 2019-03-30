@@ -39,16 +39,16 @@ calcSmsy <- function(a, b) {
 #' @return Returns the negative log likelihood of the residuals.
 
 Sgen.optim <- function (Sgen.hat, theta, Smsy) {
-	# Add warning and adjustment for non-zero spawner abundances
-	if(any(Sgen.hat < 0.00001)){
-		Sgen.hat[Sgen.hat < 0.00001] <- 0.0001
-		print(c("Sgen.hat abundance must be > 0. Negative values replaced w/ small positive"))
-	}
-	
-	if(any(Smsy < 0.00001)){
-		Smsy[Smsy < 0.00001] <- 0.0001
-		print(c("Smsy must be > 0. Negative values replaced w/ small positive"))
-	}
+	# # Add warning and adjustment for non-zero spawner abundances
+	# if(any(Sgen.hat < 0.00001)){
+	# 	Sgen.hat[Sgen.hat < 0.00001] <- 0.0001
+	# 	print(c("Sgen.hat abundance must be > 0. Negative values replaced w/ small positive"))
+	# }
+	# 
+	# if(any(Smsy < 0.00001)){
+	# 	Smsy[Smsy < 0.00001] <- 0.0001
+	# 	print(c("Smsy must be > 0. Negative values replaced w/ small positive"))
+	# }
 	
 	a <- theta[1]
 	b <- theta[2]
@@ -85,11 +85,14 @@ calcSgen <- function(Sgen.hat, theta, Smsy) {
 	fit <- optimize(f = Sgen.optim, interval = c(0, Smsy), theta = theta, Smsy = Smsy)
 	
 	# Give warning if Sgen1 is at upper or lower bound
-	if(round(fit$minimum) == round(Smsy)) warning("Sgen1 at upper bound of Smsy")
 	if(round(fit$minimum) == 0) warning("Sgen1 at lower bound of zero")
 	
-	return(Sgen1 = as.numeric(fit$minimum))
-	
+	if(round(fit$minimum) == round(Smsy)){
+		warning("Lower benchmark greater than upper benchmark (Sgen1 > Smsy). Set to NA.")
+		return(Sgen1 = NA)
+	} else {
+		return(Sgen1 = as.numeric(fit$minimum))
+	}
 }
 	
 #______________________________________________________________________________
@@ -120,27 +123,30 @@ calcSgen <- function(Sgen.hat, theta, Smsy) {
 
 assessMetric <- function(current, lower, upper) {
 	
-	if(is.na(current) == TRUE) stop("Current abundance NA")
-	if(is.na(lower) == TRUE) stop("Lower benchmark NA")
-	if(is.na(upper) == TRUE) stop("Upper benchmark NA")
+	if(is.na(current) == TRUE) warning("Current abundance NA")
+	if(is.na(lower) == TRUE) warning("Lower benchmark NA")
+	if(is.na(upper) == TRUE) warning("Upper benchmark NA")
 	
-	if(length(lower) != length(upper)) stop("Lower and upper benchmarks must be of the same length")
-	
-	# If just a single benchmark is given (no CI):
-	if(length(lower) == 1){
-		if (current <= lower){
-			status <- list("red", 3, current, lower, upper)
-		} else if (current >= upper){
-			status <- list("green", 1, current, lower, upper)
-		} else {
-			status <- list("amber", 2, current, lower, upper)
-		}
-	}
-	
-	if(length(lower) == 3){
-		stop("Probabilities for status not yet implemented for this function.")
-	}
-	
+	if(is.na(lower) == TRUE & is.na(upper) == TRUE){
+		status <- list(NA, 0, current, lower, upper)
+	} else {
+		if(length(lower) != length(upper)) stop("Lower and upper benchmarks must be of the same length")
+		
+		# If just a single benchmark is given (no CI):
+		if(length(lower) == 1){
+			if (is.na(upper) == FALSE & current >= upper){
+				status <- list("green", 1, current, lower, upper)
+			} else if (is.na(lower) == FALSE & current <= lower){
+				status <- list("red", 3, current, lower, upper)
+			} else {
+				status <- list("amber", 2, current, lower, upper)
+			}
+		} # end if length(lower) == 1
+		
+		if(length(lower) == 3){
+			stop("Probabilities for status not yet implemented for this function.")
+		}}
+		
 	return(status)
 }
 
@@ -246,7 +252,7 @@ assessTruePop <- function(SR.pairs, SR.params, gen) {
 	# Stock-recruit benchmarks
 	
 	# Upper SR benchmark (Smsy)
-	Smsy <- calcSmsy(a = SR.params[,1], b = SR.params[,2])
+	Smsy <- pmax(0, calcSmsy(a = SR.params[,1], b = SR.params[,2]))
 	
 	# Check
 	if(sum(is.na(Smsy)) > 0){
@@ -255,8 +261,8 @@ assessTruePop <- function(SR.pairs, SR.params, gen) {
 	
 	# Lower SR benchmark (Sgen1)
 	# Start optimization at 20% of Smsy
-	Sgen1 <- numeric(nPop)
-	for (i in 1:nPop) { # For each subpopulation, optimize Sgen1
+	Sgen1 <- rep(NA, nPop)
+	for (i in which(Smsy > 0)) { # For each subpopulation, optimize Sgen1
 		Sgen1[i] <- calcSgen(
 			Sgen.hat = 0.2*Smsy[i], 
 			theta = c(
@@ -266,12 +272,14 @@ assessTruePop <- function(SR.pairs, SR.params, gen) {
 			Smsy = Smsy[i])
 	}
 	
-	# Check
-	if(sum(is.na(Sgen1)) > 0){
-		stop("Error: NAs in Sgen1 for true benchmarks calculated from actual parameters.")
-	}
+	# # Check
+	# if(sum(is.na(Sgen1)) > 0){
+	# 	stop("Error: NAs in Sgen1 for true benchmarks calculated from actual parameters.")
+	# }
 	
-	statusSR <- assessMetric(current = AvgS, lower = sum(Sgen1), upper = 0.8*sum(Smsy))
+	# In assessing true status, remove NAs (equivalent to setting to zero) for lower or
+	# upper benchmarks? Most common that low Smsy -> Sgen = NA and lower benchmark is NA
+	statusSR <- assessMetric(current = AvgS, lower = sum(Sgen1, na.rm=TRUE), upper = 0.8*sum(Smsy))
 	
 	# According to Holt et al. (2018) there is no "true" historic spawners status
 	# The only "true" benchmarks are based on underlying SR parameters

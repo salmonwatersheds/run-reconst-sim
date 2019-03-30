@@ -15,8 +15,7 @@ source("model/reconstrSimulator.R")
 source("model/runSensitivity.R")
 source("model/plottingFns.R")
 
-#Temporary inputs
-# here <- here::here
+# Load base parameter values
 simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
 simPar <- simPar[simPar$scenario == "base",]
 
@@ -144,7 +143,7 @@ out_base <- out_base[[1]]
 
 #-------------------------------------------------------------
 # The misclassification of status
-i <- 6
+i <- 1
 comparison <- 1 #1 = all, 2 = A, 3 = B, 4 = true.data
 # quartz(width = 4.5, height = 2.2, pointsize = 8)
 par(mfrow=c(1,2))
@@ -188,7 +187,8 @@ if(i == 9) mtext(side = 4, "Low\nharvest", line=2)
 }
 mtext(side=2, outer=TRUE, "Proportion of simulations", line=2.5)
 
-focalScen <- c(5,9,6)
+# focalScen <- c(5,9,6)
+focalScen <- c(1:3)
 ppnWrongSummary <- matrix(NA, nrow = 5, ncol = 6, dimnames = list(c("G", "A", "R", "Cautious", "Risky"), c("SR.base", "HS.base", "SR.amber", "HS.amber", "SR.red", "HS.red")))
 for(i in 1:3){
 	for(j in 1:2){
