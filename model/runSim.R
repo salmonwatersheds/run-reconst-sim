@@ -41,17 +41,27 @@ ptime <- system.time({
 			SR = matrix(NA, nrow = nSim, ncol = 3),
 			HS = matrix(NA, nrow = nSim, ncol = 3))
 		
-		perf <- list(all = perfL, a = perfL, b = perfL, true.data = perfL)
+		perf <- perfL # list(all = perfL, a = perfL, b = perfL, true.data = perfL)
 		
 		for(i in 1:nSim){
 			out <- reconstrSim(simPar)
-			for(j in 1:4){ # for all three types of "observed data"
+			
+			# Only using full observation model
+			perf[[1]][i] <- out$performance[[1]]$currentMPE
+			for(b in 2:3){ # SR benchmarks (b = 2), or HS benchmarks (b = 3)
+				perf[[b]][i, 1:2] <- out$performance[[1]]$benchMPE[b-1, ]
+				perf[[b]][i, 3] <- out$performance[[1]]$statusDiff[b-1]
+			}
+			
+			# If using "all three" types of observed data
+			# for(j in 1:4){ # for all three types of "observed data"
 				# avgS (b = 1)
-				perf[[j]][[1]][i] <- out$performance[[j]]$currentMPE
-				for(b in 2:3){ # SR benchmarks (b = 2), or HS benchmarks (b = 3)
-					perf[[j]][[b]][i, 1:2] <- out$performance[[j]]$benchMPE[b-1, ]
-					perf[[j]][[b]][i, 3] <- out$performance[[j]]$statusDiff[b-1]
-			}}
+				# perf[[j]][[1]][i] <- out$performance[[j]]$currentMPE
+				# for(b in 2:3){ # SR benchmarks (b = 2), or HS benchmarks (b = 3)
+				# 	perf[[j]][[b]][i, 1:2] <- out$performance[[j]]$benchMPE[b-1, ]
+				# 	perf[[j]][[b]][i, 3] <- out$performance[[j]]$statusDiff[b-1]
+				# }
+				# } #end j
 		} # end nSim
 
 		perf
@@ -61,11 +71,21 @@ ptime <- system.time({
 
 ptime/60
 
-# 8 mins for 8000 MC iterations
+# 10 mins for 10,000 MC iterations with decline in capacity etc. (March 29, 2019)
 
 #-------------------------------------------------------------
 # How does the bias evolve over the number of simulations
-comparison <- 1 # Which set of 'observed' data to use. 1 = all, 2 = perfect obs, 3 = complete coverage
+
+# Create function to return a cumulative summation even when there's NAs in the data
+# Just treat NAs as zeros
+# This is relevant for the SR benchmarks, since SGEN1 or SMSY may be NA under certain Ricker parameterisations
+cumsumNA <- function(x){
+	miss <- is.na(x)
+	x[miss] <- 0
+	cs <- cumsum(x)
+	cs[miss] <- NA
+	return(cs)
+}
 
 # What is the number of simulations that leads to perfomance metrics within 3%?
 nSimEnough <- 6000
@@ -78,43 +98,47 @@ nSimEnough <- 6000
 #   (6) ppnWrong by SR,
 #   (7) ppnWrong by HS.
 cumMetric <- list(); length(cumMetric) <- 7
+
 for(i in 1:7){ # for each metric
 	cumMetric[[i]] <- matrix(NA, nrow = nSim, ncol = nChains)
 }
 
 	for(k in 1:nChains) {
 		# avgS
-		cumMetric[[1]][, k] <- cumsum(perfOut[[k]][[comparison]][[1]])/c(1:nSim)
+		cumMetric[[1]][, k] <- cumsum(perfOut[[k]][[1]])/c(1:nSim)
 		# SRbench
-		cumMetric[[2]][, k] <- cumsum(perfOut[[k]][[comparison]][[2]][, 1])/c(1:nSim)
-		cumMetric[[3]][, k] <- cumsum(perfOut[[k]][[comparison]][[2]][, 2])/c(1:nSim)
+		cumMetric[[2]][, k] <- cumsumNA(perfOut[[k]][[2]][, 1])/c(1:nSim)
+		cumMetric[[3]][, k] <- cumsumNA(perfOut[[k]][[2]][, 2])/c(1:nSim)
 		# HS bench
-		cumMetric[[4]][, k] <- cumsum(perfOut[[k]][[comparison]][[3]][, 1])/c(1:nSim)
-		cumMetric[[5]][, k] <- cumsum(perfOut[[k]][[comparison]][[3]][, 2])/c(1:nSim)
+		cumMetric[[4]][, k] <- cumsum(perfOut[[k]][[3]][, 1])/c(1:nSim)
+		cumMetric[[5]][, k] <- cumsum(perfOut[[k]][[3]][, 2])/c(1:nSim)
 		# ppnWrong
-		cumMetric[[6]][, k] <- cumsum(perfOut[[k]][[comparison]][[2]][, 3]>=4)/c(1:nSim)
-		cumMetric[[7]][, k] <- cumsum(perfOut[[k]][[comparison]][[3]][, 3]>=4)/c(1:nSim)
+		cumMetric[[6]][, k] <- cumsum(perfOut[[k]][[2]][, 3]>=4)/c(1:nSim)
+		cumMetric[[7]][, k] <- cumsum(perfOut[[k]][[3]][, 3]>=4)/c(1:nSim)
 	}
 
+
+# Calculate the maximum percent error among different "chains"
 percError <- matrix(NA, nrow = nSim, ncol = 7)
 for (i in 1:nSim) {
 	for (j in 1:7) {
 		percError[i, j] <- (max(cumMetric[[j]][i, ]) - min(cumMetric[[j]][i, ]))
 	}}
 
+# If we want to keep this percent error below 3%, how many simulations do we need?
 nSimEnough <- numeric(7)
 for(j in 1:7){
-	nSimEnough[j] <- which(cumsum(percError[, j] > 0.031) == max(cumsum(percError[, j] > 0.031)))
+	nSimEnough[j] <- which(cumsumNA(percError[, j] > 0.03) == max(cumsumNA(percError[, j] > 0.03), na.rm=TRUE))[1]
 }
 
-plot(1:nSim, percError[,1], "l", ylim=c(0, 0.1), ylab = "Max. difference among 6 runs", las=1, bty="l", xlab="Number of simulations", yaxs="i")
-for(j in 2:7) lines(1:nSim, percError[,j], col=j)
-abline(h = 0)
+plot(1:nSim, percError[,1], "n", ylim=c(0, 0.2), ylab = "Max. % difference among 6 runs", las=1, bty="l", xlab="Number of simulations", yaxs="i")
+for(j in 1:7) lines(seq(1, nSim, 10), percError[seq(1, nSim, 10),j], col=j)
 abline(h = c(0.03), lty=3)
 
-arrows(x0=nSimEnough, x1 = nSimEnough, y0 = 0.1, y1 = 0, length=0.08, col=c(1:7))
+arrows(x0=nSimEnough, x1 = nSimEnough, y0 = -0.01, y1 = 0, length=0.08, col=c(1:7), xpd=NA)
 max(nSimEnough)
 
+legend("topright", title="Performance measure", col=1:7, lwd=1, c("MPE in AvgS", "MPE in lower SR", "MPE in upper SR", "MPE in lower HS", "MPE in upper HS", "Ppn. wrong by SR", "Ppn. wrong by HS"))
 
 # Plot MPE
 par(mfcol=c(2,2), mar=c(3,5,2,2), oma=c(2,2,2,0), mgp=c(3,1,0))
@@ -131,84 +155,65 @@ for(k in 1:nChains) lines(c(1:nSim), cumMetric[[i]][, k], col=k, lwd=0.8)
 # Base case simulations
 ###############################################################################
 
-nSim <- 1000
+nSim <- 4000
 
 a_mean <- c(0.77, 1.4, 1.97) 
-# targetHarvest <- c(0.10, 0.35, 0.80)
+simPar_a <- makeParList(basePar = simPar, sensName = "a_mean", sensValues = a_mean)
 
-out_base <- runSensitivity(basePar = simPar, sensitivity = list("a_mean", a_mean), nSim = nSim, nCores = 3, multiPar = FALSE)
+out_base <- runSensitivity(parList  = simPar_a, nSim = nSim, nCores = length(a_mean))
 
 time_base <- out_base[[2]]
 out_base <- out_base[[1]]
 
 #-------------------------------------------------------------
+statusCols <- c(g = "#8EB687", a = "#DFD98D", r = "#B66A64")
+
 # The misclassification of status
-i <- 1
-comparison <- 1 #1 = all, 2 = A, 3 = B, 4 = true.data
+i <- 2
 # quartz(width = 4.5, height = 2.2, pointsize = 8)
-par(mfrow=c(1,2))
+par(mfrow=c(1,2), mar=c(4,4,2,1))
 
-plotStatusDiff(out_base[[i]][[comparison]]$HS[,3])
-mtext(side=3, "Historic spawners", font=2, col=col2[1])
+plotStatusDiff(out_base[[i]]$SR[, 3])
+mtext(side=3, "Stock-recruitment", font=2)
 
-plotStatusDiff(out_base[[i]][[comparison]]$SR[, 3])
-mtext(side=3, "Stock-recruitment", font=2, col=col2[2])
+plotStatusDiff(out_base[[i]]$HS[,3])
+mtext(side=3, "Historic spawners", font=2)
+
+# Suggest worse than actually is (pessimistic misclassification)
+# Is this due to bias in current abundance or bias in benchmarks?
+PE <- cbind(out_base[[i]]$avgS, out_base[[i]]$SR[, 1], out_base[[i]]$SR[, 2], out_base[[i]]$HS[, 1], out_base[[i]]$HS[, 2])
+
+par(mfrow=c(1,1), mar=c(4,5,2,1))
+boxplot(PE, names=c("AvgS", "Sgen1", "Smsy", "S25", "S50"), outline=FALSE, col=c("white", rep(grey(c(0.4, 0.8)), each=2)), las=1, ylab="", yaxt="n")
+abline(h=0)
+A <- axis(side=2, labels = FALSE)
+axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
+mtext(side=2, line=4, "Percent error")
+
+plotCI(c(1, 2, 2.5, 3.5, 4), apply(PE, 2, quantile, 0.5), li=apply(PE, 2, quantile, 0.25), ui=apply(PE, 2, quantile, 0.75))
 
 
-par(mfcol=c(3,3), mar=rep(0.5, 4), oma=c(5,4,2,3))
-for(i in 1:9){
-	j <- c(3:1, 6:4, 9:7)[i]
-	
-	R <- sum(
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 3)), 
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 6)), 
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 8)))
-	
-	A <- sum(
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 4)), 
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 2)), 
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 9)))
-	
-	G <- sum(
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 5)), 
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 7)), 
-			length(which(out_base[[j]][[comparison]]$SR[, 3] == 1)))
-	
-barplot(c(G,A,R)/nSim, space = 0.1, col = c(g = "#8EB687", a = "#DFD98D", r = "#B66A64"), ylim=c(0,1), yaxt="n")
-if(i <= 3) axis(side=2, at=c(0, 0.5, 1), las=1) else axis(side=2, at=c(0, 0.5, 1), labels=FALSE)
-
-if(i == 3) mtext(side = 1, "Low\nproductivity", line=2.5)
-if(i == 6) mtext(side = 1, "Moderate\nproductivity", line=2.5)
-if(i == 9) mtext(side = 1, "High\nproductivity", line=2.5)
-
-if(i == 7) mtext(side = 4, "High\nharvest", line=2)
-if(i == 8) mtext(side = 4, "Moderate\nharvest", line=2)
-if(i == 9) mtext(side = 4, "Low\nharvest", line=2)
-}
-mtext(side=2, outer=TRUE, "Proportion of simulations", line=2.5)
-
-# focalScen <- c(5,9,6)
 focalScen <- c(1:3)
 ppnWrongSummary <- matrix(NA, nrow = 5, ncol = 6, dimnames = list(c("G", "A", "R", "Cautious", "Risky"), c("SR.base", "HS.base", "SR.amber", "HS.amber", "SR.red", "HS.red")))
 for(i in 1:3){
 	for(j in 1:2){
-		ppnWrongSummary[1, (i-1)*2+j] <- length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 1))/nSim
-		ppnWrongSummary[2, (i-1)*2+j] <- length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 2))/nSim
-		ppnWrongSummary[3, (i-1)*2+j] <- length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 3))/nSim
+		ppnWrongSummary[1, (i-1)*2+j] <- length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 1))/nSim
+		ppnWrongSummary[2, (i-1)*2+j] <- length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 2))/nSim
+		ppnWrongSummary[3, (i-1)*2+j] <- length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 3))/nSim
 		
-		ppnWrongSummary[4, (i-1)*2+j] <- (length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 4)) + length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 5)) + length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 7)))/nSim
+		ppnWrongSummary[4, (i-1)*2+j] <- (length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 4)) + length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 5)) + length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 7)))/nSim
 		
-		ppnWrongSummary[5, (i-1)*2+j] <- (length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 6)) + length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 8)) + length(which(out_base[[focalScen[i]]][[comparison]][[c(3,2)[j]]][, 3] == 9)))/nSim
+		ppnWrongSummary[5, (i-1)*2+j] <- (length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 6)) + length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 8)) + length(which(out_base[[focalScen[i]]][[j+1]][, 3] == 9)))/nSim
 	}
 }
 
 par(mfrow=c(1,1), mar=c(5,4,2,15), oma=rep(0,4))
-bp <- barplot(ppnWrongSummary, col=c(g = "#8EB687", a = "#DFD98D", r = "#B66A64", grey(0.8), 1), space = c(0.3, 0.05), names = rep(c("HS", "SR"), 3), las=1, ylab = "Proportion of simulations")
-text(mean(bp[1:2]), -0.25, xpd=NA, "Moderate productivity\nModerate harvest", cex=0.8, font=2)
-text(mean(bp[3:4]), -0.25, xpd=NA, "High productivity\nHigh harvest", cex=0.8)
-text(mean(bp[5:6]), -0.25, xpd=NA, "Moderate productivity\nHigh harvest", cex=0.8)
+bp <- barplot(ppnWrongSummary, col=c(g = "#8EB687", a = "#DFD98D", r = "#B66A64", grey(0.8), 1), space = c(0.3, 0.05), names = rep(c("SR", "HS"), 3), las=1, ylab = "Proportion of simulations")
+text(mean(bp[1:2]), -0.3, xpd=NA, "Low\nproductivity", cex=0.8)
+text(mean(bp[3:4]), -0.3, xpd=NA, "Moderate\nproductivity", cex=0.8)
+text(mean(bp[5:6]), -0.3, xpd=NA, "High\nproductivity", cex=0.8)
 
-legend(7.5, 0.8, fill=c(g = "#8EB687", a = "#DFD98D", r = "#B66A64", grey(0.8), 1), legend = c("Correctly assessed as green", "Correctly assessed as amber", "Correctly assessed as red", "Incorrect (conservative)", "Incorrect (risky)"), xpd=NA, bty="n")
+legend(7.5, 0.8, fill=c(g = "#8EB687", a = "#DFD98D", r = "#B66A64", grey(0.8), 1), legend = c("Correctly assessed as green", "Correctly assessed as amber", "Correctly assessed as red", "Incorrect (pessimistic)", "Incorrect (optimistic)"), xpd=NA, bty="n")
 
 # Why are there so many incorrect with HS but not SR for baseScen 5?
 j <- 6
