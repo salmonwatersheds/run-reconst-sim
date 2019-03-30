@@ -227,7 +227,9 @@ realizedHarvestRate <- function(targetHarvest, sigmaHarvest, nYears = length(tar
 			
 	# Finally, check that there are no NaNs from something else I missed!
 		if(sum(is.na(harvestRate)) > 0){
-			stop(paste("Realized harvest still contains NAs for targetHarvest = ", targetHarvest[is.na(harvestRate)]))
+			warning
+			(paste("Realized harvest still contains NAs for targetHarvest = ", targetHarvest[is.na(harvestRate)], "\n Imputed with harvest = 0"))
+			harvestRate[is.na(harvestRate)] <- 0
 		}
 		 
 	#-----------------------------
