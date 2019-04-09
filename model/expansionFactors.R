@@ -264,7 +264,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 		years.to.use <- which(years == 1980): which(years == 1999)
 		avgSpawners <- apply(sampledSpawners[years.to.use, ], 2, sum) / apply(sampledSpawners[years.to.use, ] != 0, 2, sum)
 		
-		P <- avgSpawners / sum(avgSpawners)
+		P <- matrix(avgSpawners / sum(avgSpawners), nrow=1)
 		rm(years.to.use, avgSpawners)
 		
 	} else {
@@ -285,7 +285,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 	# Step 3: Calculate Expansion Factor 1 for each year
 	# ----------------------------------------------------------------------------
 	
-	w <- as.numeric(sampledSpawners != 0)
+	w <- (sampledSpawners != 0)
 	
 	ExpFac1 <- apply(P[as.numeric(as.factor(ref.decade)), ] * w, 1, sum) ^ (-1)
 	
@@ -461,7 +461,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 		
 		# If the number of non-indicator streams is significantly different for these two decades
 		# then use the entire time series to calculate
-		if((atLeastOne['1980']/max(atLeastOne) - atLeastOne['1990']/max(atLeastOne)) > 0.1){
+		if(abs(atLeastOne['1980']/max(atLeastOne) - atLeastOne['1990']/max(atLeastOne)) > 0.1){
 			years.to.use <- c(1:length(years))
 		} else {
 			years.to.use <- which(years == 1980): which(years == 1999)
@@ -472,6 +472,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 		
 		# Number of years in the years.to.use that each non-indicator stream is monitored
 		Yj <- apply(spawnersNonInd[years.to.use, ] != 0, 2, sum)
+	
 		# Exclude non-indicator streams that weren't monitored from calculation
 		avgNonInd <- apply(spawnersNonInd[years.to.use, which(Yj > 0)], 2, sum) / Yj[which(Yj > 0)]
 		
