@@ -99,3 +99,77 @@ runSensitivity <- function(parList, nSim, nCores){
 }
 
 
+#______________________________________________________________________________
+#' Delist output of `runSensitivity` 
+#' 
+#' This function ...
+#' 
+#' @param 
+#' @param 
+#' @return 
+#' 
+#' @details 
+#' 
+#' @examples 
+#' 
+
+delistSensitivity <- function(out){
+	
+	nSim <- length(out[[1]]$avgS)
+	n <- length(out)
+	
+	RB <- list(
+		avgS =  matrix(NA, nrow = n, ncol = 4, dimnames=list(NULL, c("mean", "median", "25th", "75th"))),
+		Sgen1 = matrix(NA, nrow = n, ncol = 4, dimnames=list(NULL, c("mean", "median", "25th", "75th"))), 
+		Smsy = matrix(NA, nrow = n, ncol = 4, dimnames=list(NULL, c("mean", "median", "25th", "75th"))), 
+		S25 = matrix(NA, nrow = n, ncol = 4, dimnames=list(NULL, c("mean", "median", "25th", "75th"))),
+		S50 = matrix(NA, nrow = n, ncol = 4, dimnames=list(NULL, c("mean", "median", "25th", "75th")))
+	)
+	
+	for (i in 1:n) {
+		
+		RB$avgS[i, 'mean'] <- mean(out[[i]]$avgS)
+		RB$avgS[i, 'median'] <- quantile(out[[i]]$avgS, 0.5, na.rm=TRUE)
+		RB$avgS[i, '25th'] <- quantile(out[[i]]$avgS, 0.25, na.rm=TRUE)
+		RB$avgS[i, '75th'] <- quantile(out[[i]]$avgS, 0.75, na.rm=TRUE)
+		
+		RB$S25[i, 'mean'] <- mean(out[[i]]$HS[,1], na.rm=TRUE)
+		RB$S25[i, 'median'] <- quantile(out[[i]]$HS[,1], 0.5, na.rm=TRUE)
+		RB$S25[i, '25th'] <- quantile(out[[i]]$HS[,1], 0.25, na.rm=TRUE)
+		RB$S25[i, '75th'] <- quantile(out[[i]]$HS[,1], 0.75, na.rm=TRUE)
+		
+		RB$S50[i, 'mean'] <- mean(out[[i]]$HS[,2], na.rm=TRUE)
+		RB$S50[i, 'median'] <- quantile(out[[i]]$HS[,2], 0.5, na.rm=TRUE)
+		RB$S50[i, '25th'] <- quantile(out[[i]]$HS[,2], 0.25, na.rm=TRUE)
+		RB$S50[i, '75th'] <- quantile(out[[i]]$HS[,2], 0.75, na.rm=TRUE)
+		
+		RB$Sgen1[i, 'mean'] <- mean(out[[i]]$SR[,1], na.rm=TRUE)
+		RB$Sgen1[i, 'median'] <- quantile(out[[i]]$SR[,1], 0.5, na.rm=TRUE)
+		RB$Sgen1[i, '25th'] <- quantile(out[[i]]$SR[,1], 0.25, na.rm=TRUE)
+		RB$Sgen1[i, '75th'] <- quantile(out[[i]]$SR[,1], 0.75, na.rm=TRUE)
+		
+		RB$Smsy[i, 'mean'] <- mean(out[[i]]$SR[,2], na.rm=TRUE)
+		RB$Smsy[i, 'median'] <- quantile(out[[i]]$SR[,2], 0.5, na.rm=TRUE)
+		RB$Smsy[i, '25th'] <- quantile(out[[i]]$SR[,2], 0.25, na.rm=TRUE)
+		RB$Smsy[i, '75th'] <- quantile(out[[i]]$SR[,2], 0.75, na.rm=TRUE)
+	}
+	
+	#----------------------------------------------------
+	# Proportion of simulations with wrong status
+	
+	ppn <- list(
+		SR = matrix(NA, nrow = n, ncol = 5, dimnames = list(NULL, c("green", 'amber', 'red', 'pessimistic', 'optimistic'))), 
+		HS = matrix(NA, nrow = n, ncol = 5, dimnames = list(NULL, c("green", 'amber', 'red', 'pessimistic', 'optimistic')))
+	)
+	for (i in 1:n) {
+		for(j in 1:2) {
+			ppn[[j]][i, 1] <- sum(out[[i]][[j+1]][, 3] == 1)/nSim
+			ppn[[j]][i, 2] <- sum(out[[i]][[j+1]][, 3] == 2)/nSim
+			ppn[[j]][i, 3] <- sum(out[[i]][[j+1]][, 3] == 3)/nSim
+			ppn[[j]][i, 4] <- sum(is.element(out[[i]][[j+1]][, 3], c(4,5,7)))/nSim
+			ppn[[j]][i, 5] <- sum(is.element(out[[i]][[j+1]][, 3], c(6,8,9)))/nSim
+			}}
+	
+	return(list(RB = RB, ppn = ppn))
+}
+	
