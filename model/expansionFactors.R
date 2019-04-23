@@ -264,7 +264,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 		years.to.use <- which(years == 1980): which(years == 1999)
 		avgSpawners <- apply(sampledSpawners[years.to.use, ], 2, sum) / apply(sampledSpawners[years.to.use, ] != 0, 2, sum)
 		
-		P <- matrix(avgSpawners / sum(avgSpawners), nrow=1)
+		P <- matrix(avgSpawners / sum(avgSpawners, na.rm=TRUE), nrow=1)
 		rm(years.to.use, avgSpawners)
 		
 	} else {
@@ -287,7 +287,11 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 	
 	w <- (sampledSpawners != 0)
 	
-	ExpFac1 <- apply(P[as.numeric(as.factor(ref.decade)), ] * w, 1, sum) ^ (-1)
+	if(length(ref.decade) == 1 & ref.decade[1] == 8090){
+		ExpFac1 <- apply(matrix(rep(P, dim(w)[1]), nrow = dim(w)[1], ncol=dim(w)[2], byrow = TRUE) * w, 1, sum, na.rm=TRUE) ^ (-1)
+	} else {
+		ExpFac1 <- apply(P[as.numeric(as.factor(ref.decade)), ] * w, 1, sum, na.rm=TRUE) ^ (-1)
+	}
 	
 	return(list(ExpFac1, ref.decade, P))
 
@@ -476,7 +480,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 		# Exclude non-indicator streams that weren't monitored from calculation
 		avgNonInd <- apply(spawnersNonInd[years.to.use, which(Yj > 0)], 2, sum) / Yj[which(Yj > 0)]
 		
-		ExpFac2 <- (sum(avgInd) + sum(avgNonInd)) / sum(avgInd)
+		ExpFac2 <- (sum(avgInd, na.rm=TRUE) + sum(avgNonInd, na.rm=TRUE)) / sum(avgInd, na.rm=TRUE)
 	
 	} else {
 	
