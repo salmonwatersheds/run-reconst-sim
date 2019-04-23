@@ -37,28 +37,35 @@ out_base <- runSensitivity(parList  = simPar_a, nSim = nSim, nCores = length(a_m
 time_base <- out_base[[2]]
 out_base <- out_base[[1]]
 
+#------------------------------------------------------------------------------
 # With 100% monitoring
+#------------------------------------------------------------------------------
+
 simPar_base2 <- list(simPar, simPar, simPar, simPar)
 
-# a) 100% monitoring of indicator
-simPar_base2[[1]]['ppnSampled_ind'] <- 1
-simPar_base2[[1]]['ppnChange_ind'] <- 0
+# a) Base case
+
+# b) 100% monitoring of indicator
+simPar_base2[[2]]['ppnSampled_ind'] <- 1
+simPar_base2[[2]]['ppnChange_ind'] <- 0
 
 # b) 100% monitoring of non indicator
-simPar_base2[[2]]['ppnSampled_nonInd'] <- 1
-simPar_base2[[2]]['ppnChange_nonInd'] <- 0
-
-# c) 100% monitoring of indicator and non-indicator
-simPar_base2[[3]] <- simPar_base2[[1]]
 simPar_base2[[3]]['ppnSampled_nonInd'] <- 1
 simPar_base2[[3]]['ppnChange_nonInd'] <- 0
 
+# c) 100% monitoring of indicator and non-indicator
+simPar_base2[[4]] <- simPar_base2[[2]]
+simPar_base2[[4]]['ppnSampled_nonInd'] <- 1
+simPar_base2[[4]]['ppnChange_nonInd'] <- 0
+
 # c) 100% monitoring and no Expansion Factor III
 
-out_base2 <- runSensitivity(parList  = simPar_base2, nSim = nSim, nCores = 3)
+out_base2 <- runSensitivity(parList  = simPar_base2, nSim = nSim, nCores = 4)
 
 time_base <- out_base[[2]]
 out_base2 <- out_base2[[1]]
+
+out_base22 <- delistSensitivity(out_base2)
 
 ###############################################################################
 # Monitoring coverage scenarios
@@ -122,33 +129,35 @@ out_mon <- out_mon[[1]]
 out_monDecl <- delistSensitivity(out_mon)
 # saveRDS(object = out_monDecl, file="workspaces/mon_delisted.rds")
 
-#------------------------------------------------------------------------------
-# "Extreme fake" monitoring scenarios...where do we get an effect!?
-#------------------------------------------------------------------------------
-ppnSampled <- rev(seq(0.2, 1, 0.2))
-ppnChange <- -seq(0.2, 0.8, 0.2)
-nPar <- length(ppnSampled) + length(ppnChange)
+# #------------------------------------------------------------------------------
+# # "Extreme fake" monitoring scenarios...where do we get an effect!?
+# #------------------------------------------------------------------------------
+# ppnSampled <- rev(seq(0.2, 1, 0.2))
+# ppnChange <- -seq(0.2, 0.8, 0.2)
+# nPar <- length(ppnSampled) + length(ppnChange)
+# 
+# simPar_fakeMon <- list(); length(simPar_fakeMon) <- 5#nPar
+# for(i in 1:length(ppnSampled)){ #constant
+# 	simPar_fakeMon[[i]] <- simPar
+# 	simPar_fakeMon[[i]]$ppnChange_ind <- 0
+# 	simPar_fakeMon[[i]]$ppnChange_nonInd <- 0
+# 	simPar_fakeMon[[i]]$ppnSampled_ind <- ppnSampled[i]
+# 	simPar_fakeMon[[i]]$ppnSampled_nonInd <- ppnSampled[i]
+# }
+# for(i in 1:length(ppnChange)){ #
+# 	simPar_fakeMon[[i+length(ppnSampled)]] <- simPar_fakeMon[[1]]
+# 	simPar_fakeMon[[i+length(ppnSampled)]]$ppnChange_ind <- ppnChange[i]
+# 	simPar_fakeMon[[i+length(ppnSampled)]]$ppnChange_nonInd <- ppnChange[i]
+# }
+# 
+# out_fakeMon <- runSensitivity(parList = simPar_fakeMon, nSim = 100, nCores = 5)
+# 
+# time_fakeMon <- out_fakeMon[[2]]
+# out_fakeMon <- out_fakeMon[[1]]
+# 
+# out_fakeMon2 <- delistSensitivity(out_fakeMon)
 
-simPar_fakeMon <- list(); length(simPar_fakeMon) <- 5#nPar
-for(i in 1:length(ppnSampled)){ #constant
-	simPar_fakeMon[[i]] <- simPar
-	simPar_fakeMon[[i]]$ppnChange_ind <- 0
-	simPar_fakeMon[[i]]$ppnChange_nonInd <- 0
-	simPar_fakeMon[[i]]$ppnSampled_ind <- ppnSampled[i]
-	simPar_fakeMon[[i]]$ppnSampled_nonInd <- ppnSampled[i]
-}
-for(i in 1:length(ppnChange)){ #
-	simPar_fakeMon[[i+length(ppnSampled)]] <- simPar_fakeMon[[1]]
-	simPar_fakeMon[[i+length(ppnSampled)]]$ppnChange_ind <- ppnChange[i]
-	simPar_fakeMon[[i+length(ppnSampled)]]$ppnChange_nonInd <- ppnChange[i]
-}
 
-out_fakeMon <- runSensitivity(parList = simPar_fakeMon, nSim = 100, nCores = 5)
-
-time_fakeMon <- out_fakeMon[[2]]
-out_fakeMon <- out_fakeMon[[1]]
-
-out_fakeMon2 <- delistSensitivity(out_fakeMon)
 
 ###############################################################################
 # Number of indicator & non-indicator streams
@@ -209,9 +218,16 @@ out_obsBias2 <- delistSensitivity(out_obsBias)
 # catchBias <- log(seq(0.5, 1.5, 0.1))
 
 catchBias <- seq(-1, 1, 0.2)
+
+
 simPar_catchBias <- makeParList(basePar = simPar, sensName = "catch_bias", sensValues = catchBias)
 
-out_catchBias <- runSensitivity(parList = simPar_catchBias, nSim = 4000, nCores = 10)
+# # Does the effect of catch bias change when capacity declines?
+# simPar2 <- simPar; simPar2$greenHab <- 0; simPar2$redHab <- 100; simPar2$amberHab <- 0
+# simPar_catchBias <- makeParList(basePar = simPar2, sensName = "catch_bias", sensValues = catchBias)
+
+
+out_catchBias <- runSensitivity(parList = simPar_catchBias, nSim = 4000, nCores = 6)
 
 time_catchBias <- out_catchBias[[2]]
 out_catchBias <- out_catchBias[[1]]
@@ -318,3 +334,72 @@ out_capacityXmon <- out_capacityXmon[[1]]
 
 out_capacityXmon2 <- delistSensitivity(out_capacityXmon)
 # saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted.rds")
+
+###############################################################################
+# Real monitoring scenarios + decline in capacity
+###############################################################################
+greenHab <- c(rev(seq(0, 100, 50)), 0)
+redHab <- c(seq(0, 50, 25), 100)
+amberHab <- c(seq(0, 50, 25), 0)
+
+cbind(greenHab, amberHab, redHab)
+
+nPar <- length(simPar_mon) * length(greenHab)
+
+combo <- cbind(cap = rep(1:length(greenHab), length(simPar_mon)), mon = rep(1:length(simPar_mon), each = length(greenHab)))
+
+# Have to make this list manually since multiple parameters change at once
+simPar_capacityXmon <- list(); length(simPar_capacityXmon) <- nPar
+for(i in 1:nPar){
+	simPar_capacityXmon[[i]] <- simPar_mon[[combo[i,'mon']]]
+	
+	simPar_capacityXmon[[i]][which(names(simPar) == "greenHab")] <- greenHab[combo[i,'cap']]
+	simPar_capacityXmon[[i]][which(names(simPar) == "amberHab")] <- amberHab[combo[i,'cap']]
+	simPar_capacityXmon[[i]][which(names(simPar) == "redHab")] <- redHab[combo[i,'cap']]
+	}
+
+out_capacityXmon <- runSensitivity(parList = simPar_capacityXmon, nSim = 4000, nCores = 8)
+
+time_capacityXmon <- out_capacityXmon[[2]]
+out_capacityXmon <- out_capacityXmon[[1]]
+
+out_capacityXmon2 <- delistSensitivity(out_capacityXmon)
+# saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted.rds")
+
+#----------
+# What about declines in capacity with 100% monitoring coverage
+simPar_capacityXmon_100cov <- list(simPar, simPar, simPar, simPar)
+for(i in 1:4){
+	simPar_capacityXmon_100cov[[i]]$ppnSampled_ind <- 1
+	simPar_capacityXmon_100cov[[i]]$ppnSampled_nonInd <- 1
+	simPar_capacityXmon_100cov[[i]]$ppnChange_ind <- 0
+	simPar_capacityXmon_100cov[[i]]$ppnChange_nonInd <- 0
+	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "greenHab")] <- greenHab[i]
+	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "amberHab")] <- amberHab[i]
+	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "redHab")] <- redHab[i]
+}
+out_capacityXmon_100cov <- runSensitivity(parList = simPar_capacityXmon_100cov, nSim = 4000, nCores = 4)
+
+time_capacityXmon_100cov <- out_capacityXmon_100cov[[2]]
+out_capacityXmon_100cov <- out_capacityXmon_100cov[[1]]
+
+out_capacityXmon2_100cov <- delistSensitivity(out_capacityXmon_100cov)
+
+
+###############################################################################
+# Changes in observation bias part-way through time series 
+###############################################################################
+
+obs_bias2 <- c(-1.6, -0.7, -0.4,  0)
+
+simPar_obsBiasChange <- makeParList(basePar = simPar, sensName = "obs_bias2", sensValues = obs_bias2)
+
+# for(i in 1:length(obsBias)) simPar_obsBias[[i]]$sigma_obs <- 0.1
+
+out_obsBiasChange <- runSensitivity(parList = simPar_obsBiasChange, nSim = 4000, nCores = 4)
+
+
+time_obsBiasChange <- out_obsBiasChange[[2]]
+out_obsBiasChange <- out_obsBiasChange[[1]]
+
+out_obsBiasChange2 <- delistSensitivity(out_obsBiasChange)
