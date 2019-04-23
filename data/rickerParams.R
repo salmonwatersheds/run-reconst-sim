@@ -68,10 +68,12 @@ datLoc$densDep <- -as.numeric(summary(fit)$coefficients[(nR+1):(2*nR),'Estimate'
 ###############################################################################
 # Productivity
 ###############################################################################
-
+quartz(width = 6.3, height = 2.8, pointsize=10)
+par(mfrow=c(1,2), mar=c(4,4,2,1))
 # Histogram of productivity over all rivers
-hist(datLoc$prod, breaks = seq(0, 3, 0.1), main="River-level productivity", xlab="Productivity (a)", las=1)
-abline(v = mean(datLoc$prod), col=2, lty=2, lwd=2)
+hist(datLoc$prod, breaks = seq(0, 3, 0.1), main="", xlab=expression(paste("Productivity (", italic(a), ")", sep="")), las=1, col=grey(0.8), border="white")
+abline(v = mean(datLoc$prod), col='dodgerblue', lwd=2)
+mtext(side=3, line=0.5, adj=0, "a) River-level productivity parameters")
 # # Add indicator and non-indicator
 # hist(datLoc$prod[datLoc$indicator=="Y"], col="#FF000030", border="#FF000080", add=TRUE, breaks=seq(0, 3, 0.1))
 # hist(datLoc$prod[datLoc$indicator=="N"], col="#0000FF30", border="#0000FF80", add=TRUE, breaks=seq(0, 3, 0.1))
