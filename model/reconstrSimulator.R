@@ -277,11 +277,17 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	
 	#_____
 	# Add lognormal observation error to all spawners
+	if(is.na(simPar$obs_biasChangeYear) == FALSE){
+		obs_bias <- c(rep(simPar$obs_bias, simPar$obs_biasChangeYear), rep(simPar$obs_bias2, simYears - simPar$obs_biasChangeYear))
+	} else {
+		obs_bias <- rep(simPar$obs_bias, simYears)
+	}
+	
 	obsSpawners <- spawners[(simPar$gen + 3):nYears, ] * matrix(exp(
-		qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
-					simPar$obs_bias, #- simPar$sigma_obs^2 / 2, # No lognormal bias correction
-					simPar$sigma_obs)), 
-		nrow = simYears, ncol = nPop)
+	qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
+				rep(obs_bias, nPop), #- simPar$sigma_obs^2 / 2, # No lognormal bias correction
+				simPar$sigma_obs)), 
+	nrow = simYears, ncol = nPop, byrow = FALSE)
 	
 	#_____
 	# Apply monitoring design (random sampling of propSampled each year)
@@ -374,7 +380,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	#_____
 	# Benchmarks: observed
 	obsData <- data.frame(S = spawnersExp3, R = obsRecruitsBY)
-	obsStatus <- assessPop(SR.pairs = obsData, gen = simPar$gen)
+	obsStatus <- assessPop(SR.pairs = obsData, gen = 4)
 	
 	#_____
 	# Benchmarks: true
@@ -387,7 +393,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	# or assess based on current SR parameters?
 	# A: Use nominal period that reflects initial capacity parameters to avoid shifting
 	# baselines.
-	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = simPar$gen)
+	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = 4)
 	
 	#-----------------------------------------------------------------------------
 	# Performance
