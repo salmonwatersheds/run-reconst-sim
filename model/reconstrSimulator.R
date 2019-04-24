@@ -149,8 +149,14 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	# If there is a fixed target harvest rate, can calculate
 	# realized harvest rates (assumed constant across subpopulations)
 	# outside of population dynamics loop
+	
+	# Check: must have target harvest rate > 5%
+	if(is.na(simPar$targetHarvest) == FALSE & simPar$targetHarvest < 0.05){
+		stop("Target harvest rate must be > 5% for Beta error")
+	}
+	
 	if(simPar$harvContRule == "noError"){
-		harvestRate <- rep(simPar$targetHarvest, nYears)
+			harvestRate <- rep(simPar$targetHarvest, nYears)
 	} else if(simPar$harvContRule == "fixedER"){
 		harvestRate <- realizedHarvestRate(
 			targetHarvest = simPar$targetHarvest, 
@@ -249,7 +255,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 		
 		# If using variable harvest rate, calculate targetHarvest based on true total return
 		if(simPar$harvContRule == "variableER"){
-			targetHarvest[y] <- round(simPar$maxHarvest * (1 - exp(simPar$d * (simPar$m - sum(recruitsRY[y, ])))), 4)
+			targetHarvest[y] <- max(c(0.05, round(simPar$maxHarvest * (1 - exp(simPar$d * (simPar$m - sum(recruitsRY[y, ])))), 4)))
 			harvestRate[y] <- realizedHarvestRate(
 				targetHarvest = targetHarvest[y], 
 				sigmaHarvest = simPar$sigma_harvest,
