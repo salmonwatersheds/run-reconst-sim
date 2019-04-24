@@ -207,9 +207,17 @@ assessPop <- function(SR.pairs, gen) {
 	statusSR <- assessMetric(current = AvgS, lower = Sgen1, upper = 0.8*Smsy)
 	
 	# historic spawners benchmarks
-	# Changed upper benchmark to 50th percentile
-	lowerP <- quantile(S, 0.25)
+	
+	# Upper BM changed to 50th percentile
 	upperP <- quantile(S, 0.5)
+	
+	# Based on Table 6 of Holt et al. (2018), if alpha < 2.5, then
+	# upper and lower benchmarks collapse to S50
+	if(exp(theta$a) < 2.5){
+		lowerP <- NA 
+	} else {
+		lowerP <- quantile(S, 0.25)
+	}
 	statusHS <- assessMetric(current = AvgS, lower = lowerP, upper = upperP)
 	
 	return(list(
