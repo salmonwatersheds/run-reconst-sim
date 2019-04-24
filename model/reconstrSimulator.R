@@ -89,6 +89,11 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	#_____
 	# Draw productivity parameters
 	a <- rnorm(nPop, simPar$a_mean, simPar$sigma_a)
+	# Limit productivity to a > 0.4 so that benchmarks are calculable
+	# Re-draw productivity parameters that are a < 0.4
+	while(length(which(a < 0.4)) > 0){
+		a[which(a < 0.4)] <- rnorm(length(which(a < 0.4)), simPar$a_mean, simPar$sigma_a)
+	}
 	
 	#_____
 	# Determine density dependence parameter and change over time
