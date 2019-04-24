@@ -134,10 +134,16 @@ assessMetric <- function(current, lower, upper) {
 		
 		# If just a single benchmark is given (no CI):
 		if(length(lower) == 1){
+			# 1) current >= upper -> green
 			if (is.na(upper) == FALSE & current >= upper){
 				status <- list("green", 1, current, lower, upper)
+			# 2) current <= lower -> red
 			} else if (is.na(lower) == FALSE & current <= lower){
 				status <- list("red", 3, current, lower, upper)
+			# 3) no lower -> current <= upper = lower -> red
+			} else if (is.na(lower) == TRUE & current <= upper){
+				status <- list("red", 3, current, lower, upper)
+			# 4) 
 			} else {
 				status <- list("amber", 2, current, lower, upper)
 			}
@@ -197,7 +203,7 @@ assessPop <- function(SR.pairs, gen) {
 	# Start optimization at 20% of Smsy
 	Sgen1 <- calcSgen(Sgen.hat = 0.2*Smsy, theta = theta, Smsy = Smsy)
 	
-	# CHanged upper benchmark to 80% Smsy
+	# Changed upper benchmark to 80% Smsy
 	statusSR <- assessMetric(current = AvgS, lower = Sgen1, upper = 0.8*Smsy)
 	
 	# historic spawners benchmarks
