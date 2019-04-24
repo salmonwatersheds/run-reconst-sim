@@ -213,7 +213,7 @@ assessPop <- function(SR.pairs, gen) {
 	
 	# Based on Table 6 of Holt et al. (2018), if alpha < 2.5, then
 	# upper and lower benchmarks collapse to S50
-	if(exp(theta$a) < 2.5){
+	if(exp(theta['a']) < 2.5){
 		lowerP <- NA 
 	} else {
 		lowerP <- quantile(S, 0.25)
