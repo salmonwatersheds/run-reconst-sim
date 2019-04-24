@@ -56,12 +56,7 @@
 #'   streams that are monitored in a given year
 #'   extinctThresh: number of spawners below which the subpopulation is 
 #'   considered extinct
-#'
-#' @param cuCustomCorrMat If corrMat == FALSE, this is applied as a custom 
-#' matrix of spatial autocorrelation among subpopulations. Allows flexibility
-#' for correlPop to differ among different pairs of subpopulations.
-#'
-#' @param seed Random number seed for the given MCMC trial. Can set to ensure
+#'#' @param seed Random number seed for the given MCMC trial. Can set to ensure
 #' results of simulation are reproducible, but should be different for each
 #' MCMC trial!!
 #' 
@@ -69,7 +64,7 @@
 #' @export
 
 
-reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCases = FALSE) {
+reconstrSim <- function(simPar, seed = NULL) {
 	
 	# If a seed for simulation is provided, then set the seed for the simulation here
 	if(length(seed) == 1){ 
@@ -391,7 +386,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	#_____
 	# Benchmarks: observed
 	obsData <- data.frame(S = spawnersExp3, R = obsRecruitsBY)
-	obsStatus <- assessPop(SR.pairs = obsData, gen = 4)
+	obsStatus <- assessPop(SR.pairs = obsData, gen = 3)
 	
 	#_____
 	# Benchmarks: true
@@ -404,7 +399,7 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	# or assess based on current SR parameters?
 	# A: Use nominal period that reflects initial capacity parameters to avoid shifting
 	# baselines.
-	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = 4)
+	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = 3)
 	
 	#-----------------------------------------------------------------------------
 	# Performance
@@ -413,54 +408,6 @@ reconstrSim <- function(simPar, cuCustomCorrMat=NULL, seed = NULL, returnObsCase
 	# trueStatus <- trueStatus.params 
 	
 	P <- perfStatus(trueStatus, obsStatus)
-	
-	# ****************************************************************************
-	if(returnObsCases == TRUE){
-		# Two categories of partial application of the observation submodel:
-		# a) Perfect observation but incomplete coverage (separates out effect
-		#		 of Expansion Factors I and II)
-		# Include incomplete monitoring of spawners observed without a bias
-		# to separate out effects of Expansion Factor I and II without III
-		sampledSpawners_noBias <- z * spawners[(simPar$gen + 3):nYears, ]
-		
-		dumExp1a <- ExpFactor1(sampledSpawners = sampledSpawners_noBias[, 1:simPar$nIndicator])
-			spawnersExp1a <- dumExp1a[[1]] * apply(sampledSpawners_noBias[, 1:simPar$nIndicator], 1, sum)
-			
-			dumExp2a <- ExpFactor2(
-				spawnersInd = sampledSpawners_noBias[, 1:simPar$nIndicator], 
-				spawnersNonInd = sampledSpawners_noBias[, (simPar$nIndicator + 1):simPar$nPop])
-			spawnersExp2a <- dumExp2a[[1]] * spawnersExp1a
-			
-			spawnersExp3a <- 1 * spawnersExp2a # Expansion Factor III = 1 because no obs_bias
-			
-			obsReturna <- obsCatch + spawnersExp3a
-			
-			recruitsShifteda <- matrix(unlist(shift(x = obsReturna, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(ages[obsPpnAge!=0]))
-			
-			obsRecruitsBYa <-  recruitsShifteda %*% obsPpnAge[obsPpnAge!=0]
-			
-			obsDataa <- data.frame(S = spawnersExp3a, R = obsRecruitsBYa)
-			obsStatusa <- assessPop(SR.pairs = obsDataa, gen = simPar$gen)
-			
-	# b) Imperfect observation but complete coverage (separates out effect
-	#		 of Expansion Factor III)
-			spawnersExp3b <- simPar$ExpFactor3 * apply(obsSpawners, 1, sum)
-			
-			obsReturnb <- obsCatch + spawnersExp3b
-			
-			recruitsShiftedb <- matrix(unlist(shift(x = obsReturnb, n = ages[obsPpnAge!=0], type = "lead")), ncol = length(ages[obsPpnAge!=0]))
-			
-			obsRecruitsBYb <-  recruitsShiftedb %*% obsPpnAge[obsPpnAge!=0]
-			
-			obsDatab <- data.frame(S = spawnersExp3b, R = obsRecruitsBYb)
-			obsStatusb <- assessPop(SR.pairs = obsDatab, gen = simPar$gen)
-			
-			# Performance 
-			Pa <- perfStatus(trueStatus, obsStatusa)
-			Pb <- perfStatus(trueStatus, obsStatusb)
-			
-	} # end ObsCases
-	# ****************************************************************************
 	
 	#-----------------------------------------------------------------------------
 	# END
