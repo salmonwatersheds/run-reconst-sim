@@ -146,42 +146,33 @@ for(i in c(1,3:8)){
 # 
 
 dat.all <- dat.all[1:(which(is.na(dat.all$location)==TRUE)[1]-1),]
+dat.fit <- dat.all[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet", ]
 
 fit.all <- nls(
 	y ~ hmax * (1 - exp(d * (m - x))), 
-	data = data.frame(x=dat.all$totalRun[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"], y=dat.all$harvestRate[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"]), 
+	data = data.frame(x=dat.fit$totalRun, y=dat.fit$harvestRate), 
 	start = list(hmax = 0.8, d = 1.2*10^-6, m = 10^5), 
 	lower = c(0, 0, 0), 
 	upper = c(1, Inf, 10^6), 
 	algorithm = "port")
 
 R.dummy <- seq(0, 2*10^6, length.out = 200)
-h.dummy <- 0.43 * (1 - exp(1.15*10^-5 * (1967 - R.dummy)))
-h.dummy2 <- 0.4 * (1 - exp(1.81*10^-5 * (1405 - R.dummy)))
-h.dummy3 <- coefficients(fit.all)['hmax'] * (1 - exp(coefficients(fit.all)['d'] * (coefficients(fit.all)['m'] - R.dummy)))
+h.dummy <- pmax(0.05, coefficients(fit.all)['hmax'] * (1 - exp(coefficients(fit.all)['d'] * (coefficients(fit.all)['m'] - R.dummy))))
 
-quartz(width = 6, height=2.8, pointsize = 9)
-par(mfrow=c(1,1), mar=c(4,4,2,15), oma=c(0,0,0,0))
-plot(
-	dat.all$totalRun[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"], 
-	dat.all$harvestRate[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"], 
-	col = grey(0.7), #"#00000050",#col=as.numeric(as.factor(dat.all$location[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"])), 
-	las=1, 
-	xlab="Total return (millions)", 
-	ylab = "Harvest rate", 
-	bty="l", 
-	pch = as.numeric(as.factor(dat.all$location[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"])),
-	xaxt="n", yaxt="n")
-	axis(side=1, at=seq(0, 1.5*10^6, 0.5*10^6), labels = c("0.0", "0.5", "1.0", "1.5"))
-	axis(side=2, at=c(0, 0.3, 0.6), las=1)
-	axis(side=2, at=coefficients(fit.all)['hmax'], labels=expression(paste(italic(h[MAX]))), las=1, cex.axis=0.8, col="dodgerblue", col.axis="dodgerblue")
-legend(2*10^6, 0.85, col=grey(0.7), pch = unique(as.numeric(as.factor(dat.all$location[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"]))), legend= unique(dat.all$location[dat.all$location != "Smith Inlet" & dat.all$location != "Rivers Inlet"]), xpd=NA)
-lines(R.dummy, h.dummy3, lwd=1.5)
-abline(h = coefficients(fit.all)['hmax'], lty=2, col="dodgerblue")
+quartz(width = 4.5, height=2.5, pointsize = 10)
+par(mfrow=c(1,1), mar=c(3.5,4,1,10), oma=c(0,0,0,0))
+plot(dat.fit$totalRun,dat.fit$harvestRate, col = grey(0.7), las=1, xlab="", ylab = "Harvest rate", pch = as.numeric(as.factor(dat.fit$location)), xaxt="n", yaxt="n")
+mtext(side=1, line=2.5, "Total return (millions)")
+axis(side=1, at=seq(0, 1.5*10^6, 0.5*10^6), labels = c("0.0", "0.5", "1.0", "1.5"))
+axis(side=2, at=c(0, 0.3, 0.6), las=1)
+axis(side=2, at=coefficients(fit.all)['hmax'], labels=expression(paste(italic(h[MAX]))), las=1, cex.axis=0.8, col="dodgerblue3", col.axis="dodgerblue3")
 
-# lines(R.dummy, h.dummy)
-# lines(R.dummy, h.dummy2, lty=2)
+lines(R.dummy, h.dummy, lwd=1.5)
+abline(h = coefficients(fit.all)['hmax'], lty=2, col="dodgerblue3")
+abline(h = 0.60, lty=3, col="dodgerblue")
+legend(2*10^6, 0.80, col=grey(0.7), pch = unique(as.numeric(as.factor(dat.fit$location))), legend= unique(dat.fit$location), xpd=NA, cex=0.8, pt.cex=1, bty="n")
 
+legend(2*10^6, 0.35, lwd = c(1.5, 1, 1), lty = c(1:3), col=c(1, "dodgerblue3", "dodgerblue"), legend = c("HCR", "Moderate harvest", "High harvest"), cex=0.8, pt.cex=1, bty="n", xpd=NA)
 
 #-----------------------------
 # Plot residuals over time
