@@ -825,11 +825,11 @@ mtext(side=1, outer=TRUE, "Proportion of subpopulations with declining capacity"
 # Capacity X Real monitoring scenarios
 ###############################################################################
 
+redHab <- c(seq(0, 50, 25), 100)
 declCap <- redHab
 jit <- 0.2
 
 delistedOut <- readRDS("workspaces/capacityXmon_delisted_baseGreen.rds")
-redHab <- c(seq(0, 50, 25), 100)
 
 quartz(width = 8, height= 5, pointsize = 10)
 # layout(matrix(c(1,2,3,3), nrow=2, byrow=2))
@@ -889,7 +889,7 @@ axis(side=1, at=bp, labels=rep(redHab, 4), tck=-0.02, mgp=c(3, 0.5, 0), las=2)
 
 mtext(side=3, line=0.5, adj=0, "c)")
 
-legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN1])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = ptCex, xpd=NA, ncol=3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
+# legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN1])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = ptCex, xpd=NA, ncol=3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
 
 #--------------------------
 # Historical spawners
@@ -918,7 +918,7 @@ axis(side=1, at=bp, labels=rep(redHab, 4), tck=-0.02, las=2, mgp=c(3, 0.5, 0))
 
 mtext(side=3, line=0.5, adj=0, "d)")
 
-legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), pt.cex = ptCex, xpd=NA, ncol = 3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
+# legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), pt.cex = ptCex, xpd=NA, ncol = 3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
 
 mtext(side=1, outer=TRUE, "Percentage of subpopulations with severe declines in capacity", line=-1)
 
@@ -1091,32 +1091,42 @@ indCol <- c(ind = "#475A83", nonInd = "#C2B642")
 indCol2 <- c(ind = "#475A8380", nonInd = "#C2B64280")
 
 # Ricker parameter calculations
+ # What does the distribution look like at low productivity given re-draw crtieria?
+y <- rnorm(10^6, quantile(datLoc$prod, 0.025), sd(datLoc$prod))
+while(length(which(y<0.4)) > 0){
+	y[which(y<0.4)] <- rnorm(length(which(y<0.4)), quantile(datLoc$prod, 0.025), sd(datLoc$prod))
+}
+dy <- density(y)
+
+x <- seq(0, 3, 0.1)
+dx <- dnorm(x, mean(datLoc$prod), sd(datLoc$prod))
 
 quartz(width = 6.3, height = 2.8, pointsize=10)
 par(mfrow=c(1,2), mar=c(4,4,2,1))
 # Histogram of productivity over all rivers
-hist(datLoc$prod, breaks = seq(0, 3, 0.1), main="", xlab=expression(paste("Productivity (", italic(a), ")", sep="")), las=1, col=grey(0.8), border="white")
-abline(v = mean(datLoc$prod), col=statusCols['r'], lwd=2)
-
-x <- seq(0, 3, 0.1)
-lines(x, dnorm(x, mean(datLoc$prod), sd(datLoc$prod))*20, col=statusCols['r'], lty=2)
+hist(datLoc$prod, breaks = seq(0, 3, 0.1), main="", xlab=expression(paste("Productivity (", italic(a), ")", sep="")), las=1, col=grey(0.8), border=grey(0.8))
+abline(v = mean(datLoc$prod), col=statusCols['g'], lwd=2)
+abline(v = quantile(datLoc$prod, 0.025), col=statusCols['r'], lwd=2 )
+abline(v = 0.4, lty=3)
+lines(x, dx/max(dx)*20, col=statusCols['g'], lwd=1.5)
+lines(dy$x, dy$y/max(dy$y)*20, col=statusCols['r'], lwd=1.5)
 
 mtext(side=3, line=0.5, adj=0, "a) Productivity")
 
 
 # Histogram of log Smax = log(1/b)
-hist(log(1/datLoc$densDep), main="", xlab=expression(paste("log ", S[MAX], " (", log(1/italic(b)), ")", sep="")), las=1, , breaks=seq(3, 13, 0.5), col=grey(0.8), border="white")
+hist(log(1/datLoc$densDep), main="", xlab=expression(paste("log ", S[MAX], " (", log(1/italic(b)), ")", sep="")), las=1, , breaks=seq(3, 13, 0.5), col=grey(0.8), border=grey(0.8))
 hist(log(1/datLoc$densDep[datLoc$indicator=="Y"]), col=indCol2['ind'], border=indCol['ind'], breaks=seq(3, 13, 0.5), add=TRUE)
 hist(log(1/datLoc$densDep[datLoc$indicator=="N"]), col=indCol2['nonInd'], border=indCol['nonInd'], add=TRUE, breaks=seq(3, 13, 0.5))
-abline(v = c(mean(log(1/datLoc$densDep[datLoc$indicator=="Y"])), mean(log(1/datLoc$densDep[datLoc$indicator=="N"]))), lwd=2, col=indCol, lty=2)
+abline(v = c(mean(log(1/datLoc$densDep[datLoc$indicator=="Y"])), mean(log(1/datLoc$densDep[datLoc$indicator=="N"]))), lwd=1.5, col=indCol)
 
 # log Smax for indicator and non-indicator
 avgSmax <- c(mean(log(1/datLoc$densDep[datLoc$indicator=="Y"])), mean(log(1/datLoc$densDep[datLoc$indicator=="N"])))
 sdSmax <- c(sd(log(1/datLoc$densDep[datLoc$indicator=="Y"])), sd(log(1/datLoc$densDep[datLoc$indicator=="N"])))
 
 x <- seq(0, 14, 0.1)
-lines(x, dnorm(x, avgSmax[1], sdSmax[1])*length(which(datLoc$indicator=="Y")), col=indCol['ind'], lty=2)
-lines(x, dnorm(x, avgSmax[2], sdSmax[2])*length(which(datLoc$indicator=="N")), col=indCol['nonInd'], lty=2)
+lines(x, dnorm(x, avgSmax[1], sdSmax[1])*length(which(datLoc$indicator=="Y")), col=indCol['ind'], lwd=1.5)
+lines(x, dnorm(x, avgSmax[2], sdSmax[2])*length(which(datLoc$indicator=="N")), col=indCol['nonInd'], lwd=1.5)
 # legend(8, 35, fill=indCol, c("indicator", "non-indicator"), bty="n", xpd=NA)
 text(11, 30, "indicator", font=2, col=indCol['ind'])
 text(11, 27, "non-indicator", font=2, col=indCol['nonInd'])
