@@ -386,7 +386,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 	#_____
 	# Benchmarks: observed
 	obsData <- data.frame(S = spawnersExp3, R = obsRecruitsBY)
-	obsStatus <- assessPop(SR.pairs = obsData, gen = 3)
+	obsStatus <- assessPop(SR.pairs = obsData, gen = 4)
 	
 	#_____
 	# Benchmarks: true
@@ -394,12 +394,11 @@ reconstrSim <- function(simPar, seed = NULL) {
 		S = apply(spawners[(simPar$gen + 3):nYears, ], 1, sum), 
 		R = apply(recruitsBY[(simPar$gen + 3):nYears, ], 1, sum))	
 	
-	# trueStatus.data <- assessPop(SR.pairs = trueData, gen = simPar$gen)
 	# Q: In assessing true status under a decline in capacity, set a nominal period 
 	# or assess based on current SR parameters?
 	# A: Use nominal period that reflects initial capacity parameters to avoid shifting
 	# baselines.
-	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = 3)
+	trueStatus <- assessTruePop(SR.pairs = trueData, SR.params = cbind(a, b[1, ]), gen = 4)
 	
 	#-----------------------------------------------------------------------------
 	# Performance
@@ -412,27 +411,6 @@ reconstrSim <- function(simPar, seed = NULL) {
 	#-----------------------------------------------------------------------------
 	# END
 	#-----------------------------------------------------------------------------
-	
-	if(returnObsCases == TRUE){
-		return(list(
-			performance = list(
-				trueParams = P, 
-				caseA = Pa, 
-				caseB = Pb),
-			status = list(
-				true = trueStatus, 
-				obs = obsStatus, 
-				obsA = obsStatusa, 
-				obsB = obsStatusb),
-			data = list(true = trueData, obs = obsData),
-			RickerPar = list(a = a, b = b, Smax = Smax),
-			trueHarvest = data.frame(
-				targetHarvest = targetHarvest[(simPar$gen + 3):nYears], 
-				realizedHarvest = harvestRate[(simPar$gen + 3):nYears], 
-				trueCatch = trueCatch[(simPar$gen + 3):nYears],
-				obsCatch = obsCatch[(simPar$gen + 3):nYears])
-		))
-	} else {
 		return(list(
 			performance = P,
 			status = list(
@@ -446,6 +424,5 @@ reconstrSim <- function(simPar, seed = NULL) {
 				trueCatch = trueCatch[(simPar$gen + 3):nYears],
 				obsCatch = obsCatch[(simPar$gen + 3):nYears])
 		))
-	}
 	
 } # end recoverySim function
