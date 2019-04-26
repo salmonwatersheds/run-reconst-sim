@@ -16,8 +16,7 @@ source("model/runSensitivity.R")
 source("model/plottingFns.R")
 
 # Load base parameter values
-simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
-simPar <- simPar[simPar$scenario == "base",]
+simPar_all <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
 
 # Determined that 4000 simulations is adequate
 # See nSim.R for justification.
@@ -28,10 +27,16 @@ nSim <- 4000
 # Base case simulations
 ###############################################################################
 
-a_mean <- c(0.77, 1.4, 1.97) 
-simPar_a <- makeParList(basePar = simPar, sensName = "a_mean", sensValues = a_mean)
+simPar_base <- list(
+	green = simPar_all[simPar_all$scenario == "baseGreen",],
+	amber = simPar_all[simPar_all$scenario == "baseAmber",],
+	red = simPar_all[simPar_all$scenario == "baseRed",]
+)
 
-out_base <- runSensitivity(parList  = simPar_a, nSim = nSim, nCores = length(a_mean))
+# # Test
+# out <- reconstrSim(simPar_base[[1]])
+
+out_base <- runSensitivity(parList  = simPar_base, nSim = nSim, nCores = 3)
 # 3.45 mins for 3 par sets on 3 cores
 
 time_base <- out_base[[2]]
@@ -41,31 +46,127 @@ out_base <- out_base[[1]]
 # With 100% monitoring
 #------------------------------------------------------------------------------
 
-simPar_base2 <- list(simPar, simPar, simPar, simPar)
+for(statusScenario in 1:3){
+	if(statusScenario == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
+	if(statusScenario == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
+	if(statusScenario == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
+	
+simPar_base100Mon <- list(simPar, simPar, simPar, simPar)
 
 # a) Base case
 
 # b) 100% monitoring of indicator
-simPar_base2[[2]]['ppnSampled_ind'] <- 1
-simPar_base2[[2]]['ppnChange_ind'] <- 0
+simPar_base100Mon[[2]]['ppnSampled_ind'] <- 1
+simPar_base100Mon[[2]]['ppnChange_ind'] <- 0
 
 # b) 100% monitoring of non indicator
-simPar_base2[[3]]['ppnSampled_nonInd'] <- 1
-simPar_base2[[3]]['ppnChange_nonInd'] <- 0
+simPar_base100Mon[[3]]['ppnSampled_nonInd'] <- 1
+simPar_base100Mon[[3]]['ppnChange_nonInd'] <- 0
 
 # c) 100% monitoring of indicator and non-indicator
-simPar_base2[[4]] <- simPar_base2[[2]]
-simPar_base2[[4]]['ppnSampled_nonInd'] <- 1
-simPar_base2[[4]]['ppnChange_nonInd'] <- 0
+simPar_base100Mon[[4]] <- simPar_base100Mon[[2]]
+simPar_base100Mon[[4]]['ppnSampled_nonInd'] <- 1
+simPar_base100Mon[[4]]['ppnChange_nonInd'] <- 0
 
 # c) 100% monitoring and no Expansion Factor III
 
-out_base2 <- runSensitivity(parList  = simPar_base2, nSim = nSim, nCores = 4)
+out_base100Mon <- runSensitivity(parList  = simPar_base100Mon, nSim = nSim, nCores = 4)
 
-time_base <- out_base[[2]]
-out_base2 <- out_base2[[1]]
+print(paste("time for 100Mon = ", out_base100Mon[[2]]))
+out_base100Mon2 <- delistSensitivity(out_base100Mon[[1]])
 
-out_base22 <- delistSensitivity(out_base2)
+if(statusScenario == 1) saveRDS(object = out_base100Mon2, file="workspaces/base100Mon_delisted_baseGreen.rds")
+if(statusScenario == 2) saveRDS(object = out_base100Mon2, file="workspaces/base100Mon_delisted_baseAmber.rds")
+if(statusScenario == 3) saveRDS(object = out_base100Mon2, file="workspaces/base100Mon_delisted_baseRed.rds")
+
+
+
+###############################################################################
+# Real monitoring scenarios + decline in capacity ** Fig 3 **
+###############################################################################
+# Monitoring coverage scenarios:
+# 1) No decline - keep at ppnSampled_ind = 0.762 and ppnSampled_nonInd = 0.719
+# 2) Observed decline since mid 1980s across all systems - ppnChange_ind = -0.047 and ppnChange_nonInd = -0.667
+# 3) Observed decline since mid 1980s over for chum
+# 4) Observed decline since 2014 across all systems
+
+simPar_mon <- list(); length(simPar_mon) <- 4
+
+# 1) No decline
+simPar_mon[[1]] <- simPar
+simPar_mon[[1]]['ppnChange_ind'] <- 0
+simPar_mon[[1]]['ppnChange_nonInd'] <- 0
+
+# 2) Base case
+simPar_mon[[2]] <- simPar
+
+# 3) Chum decline
+simPar_mon[[3]] <- simPar
+simPar_mon[[3]]['ppnChange_ind'] <- -0.2029197 
+simPar_mon[[3]]['ppnChange_nonInd'] <- -0.2433794
+simPar_mon[[3]]['ppnSampled_ind'] <- 0.8604703
+simPar_mon[[3]]['ppnSampled_nonInd'] <- 0.3323478
+
+# 4) Recent decline for indicator streams
+simPar_mon[[4]] <- simPar
+simPar_mon[[4]]['ppnSampled_ind'] <- 0.7720889
+simPar_mon[[4]]['ppnChange_ind'] <- -0.208303
+simPar_mon[[4]]['samplingDeclStart_ind'] <- 46
+
+greenHab <- c(rev(seq(0, 100, 50)), 0)
+redHab <- c(seq(0, 50, 25), 100)
+amberHab <- c(seq(0, 50, 25), 0)
+
+cbind(greenHab, amberHab, redHab)
+
+nPar <- length(simPar_mon) * length(greenHab)
+
+combo <- cbind(cap = rep(1:length(greenHab), length(simPar_mon)), mon = rep(1:length(simPar_mon), each = length(greenHab)))
+
+# Have to make this list manually since multiple parameters change at once
+simPar_capacityXmon <- list(); length(simPar_capacityXmon) <- nPar
+for(i in 1:nPar){
+	simPar_capacityXmon[[i]] <- simPar_mon[[combo[i,'mon']]]
+	
+	simPar_capacityXmon[[i]][which(names(simPar) == "greenHab")] <- greenHab[combo[i,'cap']]
+	simPar_capacityXmon[[i]][which(names(simPar) == "amberHab")] <- amberHab[combo[i,'cap']]
+	simPar_capacityXmon[[i]][which(names(simPar) == "redHab")] <- redHab[combo[i,'cap']]
+}
+
+out_capacityXmon <- runSensitivity(parList = simPar_capacityXmon, nSim = 4000, nCores = 8)
+
+time_capacityXmon <- out_capacityXmon[[2]] # 11 mins
+out_capacityXmon <- out_capacityXmon[[1]]
+
+out_capacityXmon2 <- delistSensitivity(out_capacityXmon)
+# saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseGreen.rds")
+
+if(statusScenario == 1) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseGreen.rds")
+if(statusScenario == 2) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseAmber.rds")
+if(statusScenario == 3) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseRed.rds")
+
+} # end statusScenario
+
+#----------
+# What about declines in capacity with 100% monitoring coverage
+simPar_capacityXmon_100cov <- list(simPar, simPar, simPar, simPar)
+for(i in 1:4){
+	simPar_capacityXmon_100cov[[i]]$ppnSampled_ind <- 1
+	simPar_capacityXmon_100cov[[i]]$ppnSampled_nonInd <- 1
+	simPar_capacityXmon_100cov[[i]]$ppnChange_ind <- 0
+	simPar_capacityXmon_100cov[[i]]$ppnChange_nonInd <- 0
+	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "greenHab")] <- greenHab[i]
+	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "amberHab")] <- amberHab[i]
+	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "redHab")] <- redHab[i]
+}
+out_capacityXmon_100cov <- runSensitivity(parList = simPar_capacityXmon_100cov, nSim = 4000, nCores = 4)
+
+time_capacityXmon_100cov <- out_capacityXmon_100cov[[2]]
+out_capacityXmon_100cov <- out_capacityXmon_100cov[[1]]
+
+out_capacityXmon2_100cov <- delistSensitivity(out_capacityXmon_100cov)
+
+
 
 ###############################################################################
 # Monitoring coverage scenarios
@@ -334,57 +435,6 @@ out_capacityXmon <- out_capacityXmon[[1]]
 
 out_capacityXmon2 <- delistSensitivity(out_capacityXmon)
 # saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted.rds")
-
-###############################################################################
-# Real monitoring scenarios + decline in capacity
-###############################################################################
-greenHab <- c(rev(seq(0, 100, 50)), 0)
-redHab <- c(seq(0, 50, 25), 100)
-amberHab <- c(seq(0, 50, 25), 0)
-
-cbind(greenHab, amberHab, redHab)
-
-nPar <- length(simPar_mon) * length(greenHab)
-
-combo <- cbind(cap = rep(1:length(greenHab), length(simPar_mon)), mon = rep(1:length(simPar_mon), each = length(greenHab)))
-
-# Have to make this list manually since multiple parameters change at once
-simPar_capacityXmon <- list(); length(simPar_capacityXmon) <- nPar
-for(i in 1:nPar){
-	simPar_capacityXmon[[i]] <- simPar_mon[[combo[i,'mon']]]
-	
-	simPar_capacityXmon[[i]][which(names(simPar) == "greenHab")] <- greenHab[combo[i,'cap']]
-	simPar_capacityXmon[[i]][which(names(simPar) == "amberHab")] <- amberHab[combo[i,'cap']]
-	simPar_capacityXmon[[i]][which(names(simPar) == "redHab")] <- redHab[combo[i,'cap']]
-	}
-
-out_capacityXmon <- runSensitivity(parList = simPar_capacityXmon, nSim = 4000, nCores = 8)
-
-time_capacityXmon <- out_capacityXmon[[2]]
-out_capacityXmon <- out_capacityXmon[[1]]
-
-out_capacityXmon2 <- delistSensitivity(out_capacityXmon)
-# saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted.rds")
-
-#----------
-# What about declines in capacity with 100% monitoring coverage
-simPar_capacityXmon_100cov <- list(simPar, simPar, simPar, simPar)
-for(i in 1:4){
-	simPar_capacityXmon_100cov[[i]]$ppnSampled_ind <- 1
-	simPar_capacityXmon_100cov[[i]]$ppnSampled_nonInd <- 1
-	simPar_capacityXmon_100cov[[i]]$ppnChange_ind <- 0
-	simPar_capacityXmon_100cov[[i]]$ppnChange_nonInd <- 0
-	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "greenHab")] <- greenHab[i]
-	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "amberHab")] <- amberHab[i]
-	simPar_capacityXmon_100cov[[i]][which(names(simPar) == "redHab")] <- redHab[i]
-}
-out_capacityXmon_100cov <- runSensitivity(parList = simPar_capacityXmon_100cov, nSim = 4000, nCores = 4)
-
-time_capacityXmon_100cov <- out_capacityXmon_100cov[[2]]
-out_capacityXmon_100cov <- out_capacityXmon_100cov[[1]]
-
-out_capacityXmon2_100cov <- delistSensitivity(out_capacityXmon_100cov)
-
 
 ###############################################################################
 # Changes in observation bias part-way through time series 
