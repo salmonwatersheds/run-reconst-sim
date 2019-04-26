@@ -225,7 +225,7 @@ assessPop <- function(SR.pairs, gen) {
 		statusNum = c(SR = statusSR[[2]], HS = statusHS[[2]]),
 		current = AvgS,
 		lowerBenchmark = c(SR = Sgen1, HS = lowerP),
-		upperBenchmark = c(SR = Smsy, HS = upperP)
+		upperBenchmark = c(SR = 0.8*Smsy, HS = upperP)
 		))
 	
 }
@@ -309,7 +309,7 @@ assessTruePop <- function(SR.pairs, SR.params, gen) {
 		statusNum = c(SR = statusSR[[2]], HS = statusSR[[2]]),
 		current = AvgS,
 		lowerBenchmark = c(SR = sum(Sgen1), HS = sum(Sgen1)),
-		upperBenchmark = c(SR = sum(Smsy), HS = sum(Smsy))
+		upperBenchmark = c(SR = 0.8*sum(Smsy), HS = 0.8*sum(Smsy))
 	))
 	
 }
