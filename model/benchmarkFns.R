@@ -218,7 +218,7 @@ assessPop <- function(SR.pairs, gen) {
 	} else {
 		lowerP <- quantile(S, 0.25)
 	}
-	statusHS <- assessMetric(current = AvgS, lower = lowerP, upper = upperP)
+	statusHS <- assessMetric(current = AvgS, lower = as.numeric(lowerP), upper = as.numeric(upperP))
 	
 	return(list(
 		status = c(SR = statusSR[[1]], HS = statusHS[[1]]),
