@@ -47,6 +47,7 @@ Rplots.pdf
 model/modelDescription.Rmd
 model/model.png
 model/performance.png
+model/.DS_Store
 
 # large datasets
 data/NUSEDS_20190117.csv
