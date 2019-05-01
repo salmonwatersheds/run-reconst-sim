@@ -69,6 +69,7 @@ sd(h)
 ###############################################################################
 # Relationship between abundance and harvest rates
 ###############################################################################
+
 datEsc <- read.csv("data/nccdbv2_NCCStreamEscapement.csv")
 datAbund <- read.csv("data/PSE_chumSpawnerAbundanceAndTotalRunSize.csv")
 

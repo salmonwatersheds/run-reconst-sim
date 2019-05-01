@@ -58,9 +58,6 @@ datSR$Spawners_scaled <- datSR$Spawners * 10^-5
 # estimates of productivity and density dependence
 fit <- lmer(y ~ River + Spawners_scaled:River - 1 + (1|CU), data = datSR)
 
-summary(fit)
-
-
 # Include productivity and density dependence estimates in river-level data frame
 datLoc$prod <- as.numeric(summary(fit)$coefficients[1:nR,'Estimate'])
 datLoc$densDep <- -as.numeric(summary(fit)$coefficients[(nR+1):(2*nR),'Estimate']) * 10^-5
@@ -68,6 +65,7 @@ datLoc$densDep <- -as.numeric(summary(fit)$coefficients[(nR+1):(2*nR),'Estimate'
 ###############################################################################
 # Productivity
 ###############################################################################
+
 quartz(width = 6.3, height = 2.8, pointsize=10)
 par(mfrow=c(1,2), mar=c(4,4,2,1))
 # Histogram of productivity over all rivers
@@ -239,23 +237,3 @@ sd(eps, na.rm=TRUE) # Different because of random effect?
 # Within subpopulation
 sdPop <- apply(datResRaw[, 2:(nR+1)], 2, sd, na.rm=TRUE)
 sigma_u <- mean(sdPop) # Slightly lower 
-
-# ###############################################################################
-# # Test range in autocorrelation where variance-covariance is positive definite
-# ###############################################################################
-# nPop <- 35
-# correlPop.all <- seq(-0.1, 0.99, 0.01)
-# isPosDef <- numeric(correlPop.all)
-# 
-# for(i in 1:length(correlPop.all)){
-# 	correlPop <- 2*correlPop
-# 
-# sigMat <- matrix(as.numeric(sigma_u), nrow = 1, ncol = nPop) 
-# varMat <- t(sigMat) %*% sigMat # Calculate shared variance
-# covMat <- correlPop * varMat # Correct based on correlation
-# diag(covMat) <- as.numeric(sigma_u^2) # Add variance
-# 
-# is.positive.definite(covMat)
-# 
-# 
-# rmvnorm(1, rep(0, nPop), sigma = covMat2)

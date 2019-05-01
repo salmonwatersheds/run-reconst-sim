@@ -3,6 +3,7 @@ library(RColorBrewer)
 
 # indCol <- c(ind = "#FF0000", nonInd = "#0000FF")
 indCol <- c(ind = "#000000", nonInd = "#666666")
+
 ###############################################################################
 # Load data
 ###############################################################################
@@ -18,7 +19,8 @@ datMon$ppn_nonindicator <- (datMon$num_nonindicator)/(tot-totIndicator)
 datMon$ppn_total <- datMon$num_total/tot
 
 ###############################################################################
-# A) What was the decline in monitoring since the mid-1980s?
+# 1) What was the decline in monitoring since the mid-1980s?
+# This is the base case scenario (scenario B in paper)
 ###############################################################################
 
 # Pre-decline and during decline
@@ -31,9 +33,9 @@ fitInd <- lm((datMon$ppn_indicator[period2] - preDecl[1]) ~ 0 + c(1:length(perio
 fitNonInd <- lm((datMon$ppn_nonindicator[period2] - preDecl[2]) ~ 0 + c(1:length(period2)))
 fit <- lm((datMon$ppn_total[period2] - preDecl[3]) ~ 0 + c(1:length(period2)))
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Plotting
-###############################################################################
+#------------------------------------------------------------------------------
 
 # par(mfrow=c(1,2), mar=c(3,4,2,1))
 # # Reproduce plots from English (2016)
@@ -67,7 +69,8 @@ fit <- lm((datMon$ppn_total[period2] - preDecl[3]) ~ 0 + c(1:length(period2)))
 # tail(predict(fit), 1)
 
 ###############################################################################
-# B) What was the decline in monitoring in the last 5 years of data?
+# 2) What was the decline in monitoring in the last 5 years of data?
+# Scenario C in paper
 ###############################################################################
 
 # Pre-decline and during decline
@@ -90,7 +93,8 @@ fit.b <- lm((datMon$ppn_total[period2.b] - preDecl.b[3]) ~ 0 + c(1:length(period
 # lines(datMon$year[c(period1.b, period2.b)], c(rep(preDecl.b[2], length(period1.b)), preDecl.b[2] + predict(fitNonInd.b)), col=indCol['nonInd'])
 
 ###############################################################################
-# C) Look at decline in monitoring for chum salmon only using river-level SR data
+# 3) Look at decline in monitoring for chum salmon only using river-level SR data
+# Scenario D in paper
 ###############################################################################
 
 datSR <- read.csv("data/NCC_chum_streams_SR_data.csv")
@@ -124,8 +128,9 @@ year <- as.numeric(rownames(numMonitored))
 # points(year, ppnMonitored[,3],  col=4, cex=0.8)
 
 tot <- cbind(all = tapply(datSR$monitored, datSR$BroodYear, length), ind = tapply(datSR$monitored[datSR$Indicator=="Y"], datSR$BroodYear[datSR$Indicator=="Y"], length), nonInd = tapply(datSR$monitored[datSR$Indicator=="N"], datSR$BroodYear[datSR$Indicator=="N"], length))[1,]
+
 #------------------------------------------------------------------------------
-# C) What was the decline in monitoring FOR CHUM?
+# What was the decline in monitoring FOR CHUM?
 #------------------------------------------------------------------------------
 
 # Pre-decline and during decline

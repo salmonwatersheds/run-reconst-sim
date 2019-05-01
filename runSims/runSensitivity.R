@@ -102,11 +102,15 @@ runSensitivity <- function(parList, nSim, nCores){
 #______________________________________________________________________________
 #' Delist output of `runSensitivity` 
 #' 
-#' This function ...
+#' This function delists the output from `runSensitivity` so that RB and 
+#' proportion of simulations with correct or misclassified status can be easily
+#' plotted over the different parameter sets.
 #' 
-#' @param 
-#' @param 
-#' @return 
+#' @param out THe first element (not the time) of the output from `runSensitivity``
+#' @return Returns a list where the first element is the relative bias (RB) of 
+#' benchmarks and average spawners over the different parameter sets and the 
+#' second element is the proportion of simulations correctly assessed as green, 
+#' amber, or red, or misclassified optimistic or pessimistic.
 #' 
 #' @details 
 #' 

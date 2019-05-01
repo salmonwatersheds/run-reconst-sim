@@ -1,9 +1,8 @@
-Evaluating the consequences of basic assumptions in run-reconstructions when quantifying the biological status of Pacific salmon
+Evaluating the consequences of commmon assumptions in run-reconstructions when quantifying the biological status of Pacific salmon
 ================
 Stephanie Peacock
-2019-01-29
+2019-05-01
 
-<!-- # To do list -->
 Motivation
 ==========
 
@@ -30,13 +29,13 @@ The specific assumptions made in reconstructing spawner, harvest, and resulting 
 
 The project will quantify the consequences of these assumptions for the bias and precision of benchmarks and, ultimately, status assessments under a base case that corresponds to the historical conditions for central coast chum (e.g., historical monitoring coverage, trends in covariance among subpopulations, and changes in harvest rates).
 
-Files
-=====
+Files and folders
+=================
 
-Further details on the model and how these functions are used are given in the *Model description* below. The following just outlines the contents of each file, in a nutshell. Functions are documented in `roxygen2` style to facilitate conversion to an R package at some point.
+model
+-----
 
--   `runSim.R` is a temporary R file that contains snippits of code for me to test the `reconstSim` function and look at output. Warning: this is just for my own playing around and is not well commented!
--   `reconstrSimulator.R` contains the `reconstSim` function that runs a single MCMC simulation of salmon population dynamics, observation, and assessment, and returns the observed and true status as well as performance metrics.
+All functions to run a simulation are in the `model` folder, along with a complete description of the model equations. Functions are documented in `roxygen2` style to facilitate conversion to an R package at some point. The main function that runs a single MC simulation of salmon population dynamics, observation, and assessment, and returns the observed and true status as well as performance metrics is the `reconstSim` function described in the `reconstrSimulator.R` file.
 
 The functions called by `reconstrSim` that comprise the simulation model are organized into files based on the submodel that they correspond to:
 
@@ -55,194 +54,32 @@ The functions called by `reconstrSim` that comprise the simulation model are org
     -   `calcSgen` that calculates *S*<sub>*G**E**N*1</sub> by optimizing `Sgen.optim`
     -   `assessMetric` that returns the status given current abundance and upper and lower benchmarks on a given metric
     -   `assessPop` that returns a population assessment based on both SR and percentile metrics of spawners abundance, to be applied to either observed or true spawners and recruits
+    -   `assessTruePop` that returns a population assessment based on the "true" spawner abundance and the "true" SR benchmarks as calculated from the underlynig SR parameters.
 -   `performanceFns.R` contains function
     -   `perfStatus` that takes the true and observed status output from `assessPop` and returns the bias (raw mean error) in benchmarks (observed - true) and the status code 1-9, which tells whether the final status (green (1), amber (2), or red (3)) was the same for true and observed or different, and if they were different, how they differed.
--   `plottingFns.R` contains functions to plot the output of simulations, including
-    -   `plotStatusDiff` that produces a 3 x 3 matrix plot with the proportion of MCMC simulations giving green, amber, or red status in both true (x-axis) and observed (y-axis) data.
 
 Details of all functions can be found in their respective files.
 
-Model description
-=================
-
-The R code in this repository simulates a stochastic model of salmon population dynamics, allowing control over various biological and management factors that may influence the accuracy of status assessments. This model is based on previous studies by Carrie Holt and colleagues (e.g., [Holt and Folkes 2015](http://dx.doi.org/10.1016/j.fishres.2015.01.002), Holt et al. 2018) that developed different versions of a simulation model, comprised of sub-models for salmon population dynamics, observation of spawners, assessment, harvest, and performance (Fig. 1), in order to evaluate approaches to salmon population assessment and management.
-
-![Schematic of the simulation model, including sub-models for population dynamics, harvest, observation, assessment, and performance. The entire process will be repeated under different levels of correlation among sub-populations in residuals, inter-annual variability in age-at-return, bias in harvest, and observation errors (see research questions, above). Adapted from [Holt et al. (2016)](https://www.psc.org/fund-project/adapting-benchmarks/).](model.png)
-
-Running a simulation
---------------------
-
-The `recoverySim` function found in `reconstrSimulator.R` runs a single MCMC simulation of the model outlined in Fig. 1. The various parameters and controls are passed to this function in a named vector called `simPar` that can be read from a .csv file. Several examples of parameters used in the simulations for this project can be found in the `Data` folder. The following description outlines the components within the `recoverySim` function, relating parts of the code to the mathematical equations for population dynamics, observation, and assessment of the hypothetical chum salmon CU. **Note that the equations may not display properly in the GitHub markdown doc, in which case refer to the README.pdf version of this document.**
-
-Population sub-model
---------------------
-
-The population dynamics of multiple sub-populations, *j*, designated as indicator or non-indicator streams, are simulated within a single hypothetical CU following a Ricker type stock-recruitment relationship, with parameters based on observations from central coast chum CUs ([Connors et al. 2018](https://salmonwatersheds.ca/library/lib_442/)). The true population dynamics are simulated in a loop over `nYears`.
-
-The first loop is an initialization that calculates the recruits by brood year `recruitsBY`, *R*<sub>*y*, *j*</sub><sup>′</sup>, for years 1 to `gen + 2`, where `gen` is the number of different ages fish can return at (we consider `gen` = 5 as chum have been known to return at ages 2, 3, 4, 5, and 6 - although the proportion that return at age 2 and 6 is zero in our case). These values are needed in order to calculate the first recruits by return year `recruitsRY`, which includes recruits that return as age 3, 4, or 5 year olds in our case (the model is flexible to incorporate the possible of 2 and 6 year olds returning, too). For each year in this initialization, we assumed that the number of spawners was equal to 20% of equilibrium spawner abundance, *S*<sub>*j*</sub><sup>\*</sup> = *a*<sub>*j*</sub>/*b* for subpopulation *j* (Holt et al. 2018 CSAS).
-
-The second loop simulates the true population dynamics from year `gen + 3` to `nYears`. The number of salmon returning to spawn in **return year *t*** and subpopulation *j*, *R*<sub>*t*, *j*</sub>, is calculated as:
-
-*R*<sub>*t*,  *j*</sub> = *R*′<sub>*t* − 3,  *j*</sub> *p*<sub>*t* − 3,  3</sub> + *R*′<sub>*t* − 4,  *j*</sub> *p*<sub>*t* − 4,  4</sub> + *R*′<sub>*t* − 5,  *j*</sub> *p*<sub>*t* − 5,  5</sub>
-
-where *p*<sub>*y*, *g*</sub> is the proportion of recruits from **brood year *y*** returning as *g* year olds (i.e., age-at-maturity for **brood year *y***). Throughout this model description, we use *R* to denote returns, or catch plus escapement of fish returning in a year, and *R*<sup>′</sup> to denote recruitment, or the number of offspring from a brood year that survive to return to spawn over several years (due to variable age-at-return). We assume that the proportion of recruits returning at a given age is the same among subpopulations, but incorporate interannual variability as in Holt et al. (2018 CSAS):
-
-$$ p\_{y,g} = \\frac{\\bar{p}\_g \\! \\exp ({\\bar{\\omega} \\, \\varepsilon\_{y,g}})}{\\sum\_{G = 3}^{5} \\bar{p}\_G \\! \\exp ({\\bar{\\omega} \\, \\varepsilon\_{y,G}})} $$
-
-<!-- In the model, this is coded as: -->
-<!-- ``` -->
-<!-- recruitsRY[y, ] <- ppnAge[cbind(y - ages, 1:simPar$gen)] %*% recruitsBY[y - ages,] -->
-<!-- ``` -->
-<!-- where the `ppnAge` matrix incorporating natural interannual variability is calculated prior to the population dynamics loop using the `ppnAgeErr` function. -->
-The number of salmon that escape the fishery and return to spawn **in return year *t*** is the number of returning salmon *R*<sub>*t*, *j*</sub> times 1 − *h*<sub>*t*</sub>, where *h*<sub>*t*</sub> is the realized harvest rate for year *t*. We assume a predetermined target harvest rate, *h*<sub>*t*</sub><sup>′</sup>, but incorporate normally distributed error around that:
-
-*h*<sub>*t*</sub> ∼ *N*(*h*<sub>*t*</sub><sup>′</sup>,  *σ*<sub>*h*</sub>)
-
-with the constraint that 0 &lt; *h*<sub>*t*</sub> &lt; 1. If *h*<sub>*t*</sub> ≤ 0 or *h*<sub>*t*</sub> ≥ 1, we drew another random *h*<sub>*t*</sub> until this condition was satisfied. As with the `ppnAge`, we assume the same harvest rate among subpopulations and the vector of harvest rates `harvestRate` is calculated prior to the population dynamics loop and then applied within.
-
-The number of fish **returning to spawn in year *t*** and subpopulation *j* is calculated as:
-
-*S*<sub>*t*, *j*</sub> = (1 − *h*<sub>*t*</sub>) *R*<sub>*t*, *j*</sub>
-
-<!-- or in R code: -->
-<!-- ``` -->
-<!-- spawners[y, ] <- harvestRate[y] * recruitsRY[y, ] -->
-<!-- ``` -->
-The true total catch of fish that would have returned to streams within the CU is calculated as:
-
-*C*<sub>*t*</sub> = (1 − *h*<sub>*t*</sub>) ∑<sub>*j*</sub>*R*<sub>*t*, *j*</sub>
-
-For this project, we ignore potential straying of returning adults among subpopulations that was included in some previous analyses (e.g., Holt et al. 2018 and [Peacock & Holt 2012](http://www.nrcresearchpress.com/doi/full/10.1139/f2012-004)).
-
-Finally, to calculate the number of recruits from **brood year *y*** and subpopulation *j*, we apply the Ricker model:
-
-*R*′<sub>*y*, *j*</sub> = *S*<sub>*y*, *j*</sub> exp(*a*<sub>*j*</sub> − *b* *S*<sub>*y*, *j*</sub>) exp(*ϕ*<sub>*y*, *j*</sub>)
-
-where *a*<sub>*j*</sub> is the log recruits per spawner at low spawner abundance (i.e., productivity), which is assumed to be normally distributed among subpopulations with some mean $\\bar{a}$ and variance *σ*<sub>*a*</sub><sup>2</sup>, *b* is the density-dependence parameter, which is assumed to be the same among all subpopulations, and *ϕ*<sub>*y*, *j*</sub> are the recruitment deviations for year *y* and subpopulation *j*. We incorporated temporal autocorrelation in recruitment residuals:
-
-*ϕ*<sub>*y*, *j*</sub> = *ρ* *ϕ*<sub>*y* − 1, *j*</sub> + *υ*<sub>*y*, *j*</sub>
-
-where *ρ* is the temporal autocorrelation coefficient and *υ*<sub>*y*, *j*</sub> is drawn from a multivariate normal distribution with means zero (**right? I think Cam mentioned they are no longer using the lognormal correction here?**) and variance-covariance matrix:
-
-$$ \\Sigma\_{j \\times j} = \\left\[ \\begin{array} {cccc}
-\\; \\sigma^2\_{\\upsilon} & \\rho\_{\\upsilon} \\, \\sigma^2\_{\\upsilon} & \\ldots & \\rho\_{\\upsilon} \\, \\sigma^2\_{\\upsilon} \\\\
-\\rho\_{\\upsilon} \\, \\sigma^2\_{\\upsilon} & \\sigma^2\_{\\upsilon} & \\ldots & \\rho\_{\\upsilon} \\, \\sigma^2\_{\\upsilon} \\\\
-\\vdots & \\vdots & \\ddots & \\vdots \\\\
-\\rho\_{\\upsilon} \\, \\sigma^2\_{\\upsilon} & \\rho\_{\\upsilon} \\, \\sigma^2\_{\\upsilon} & \\ldots & \\sigma^2\_{\\upsilon} \\\\ 
-\\end{array} \\right\]\_{j \\times j} $$
-
-**Question: I believe that *ρ*<sub>*υ*</sub> (autocorrelation among subpopulations) is different from *ρ* (temporal autocorrelation), but this is not clear in Holt et al. (2018 CSAS) equations (F7). Check.** Here, *σ*<sub>*υ*</sub> is the standard deviation in residuals without autocorrelation (Ricker 1975, Holt and Bradford 2011) and ***ρ*<sub>*υ*</sub> is the "spatial" autocorrelation among subpopulations.** In the initialization loop, we assumed that *ϕ*<sub>*y* = 1, *j*</sub> = 0.
-
-<!-- The calculation of recruits is done in the model using the `rickerModel` function. There are two checks built into this function: (1) an extinction threshold such that if $S_{y,j}$ < `extinctThresh` then $R'_{y,j}$ = 0 and (2) a recruitment cap such that if $R'_{y,j}$ > `recCap` then $R'_{y,j}$ = `recCap`.  The resulting recruits and recruitment deviations are stored in matrices `recruitsBY` and `phi`, respectively. -->
-Observation sub-model
----------------------
-
-In any given year, sub-population *j* is observed with probability, *p*<sub>*y*, *j*</sub>. Depending on the scenario, this probability may be constant over time, or incorporate some change in monitoring effort (e.g., a decline in the probability of being sampled at some point in time or over a period of time). **For now, I have assumed that the sampling probability is the same for indicator and non-indicator streams, but this may need to be changed. Note that the observed spawner abundance for non-indicator streams is not used in the calculation of aggregate spawner abundance to the CU except for the calculation of the second expansion factor. ** In the model code, this sampling design is applied by the function `samplingDesign`, which takes a base value for *p* (`ppnSampled`), as well as a change in *p* (`ppnChange`) and a start and end year over which that change is applied (`samplingDeclStart` and `samplingDeclEnd`).
-
-Observed spawner abundance incorporates log-normal observation error:
-
-$$ \\hat{S}\_{y,j} = z\_{y,j} \\; \[ S\_{y,j} \\; \\exp (\\delta\_{y,j}) \] $$
-
-where *z*<sub>*y*, *j*</sub> ∼ Bernoulli(prob = *p*<sub>*y*, *j*</sub>), $\\delta\_{y,j} \\sim N(\\bar{\\delta} - 0.5 \\; \\sigma\_\\delta^2, \\; \\sigma\_\\delta^2)$, and *σ*<sub>*δ*</sub> is the standard deviation in observation error of spawner abundances. We include a negative a bias in the observation of spawners ($\\bar{\\delta} \\leq 0$) such that the mean observed spawner abundance is generally lower than the true spawner abundance. This simulates the (in)efficiency of observation and motivates the application of Expansion Factor III when performing run reconstruction (described in Assessment below). The calculation of Expansion Factor I (see Expansion factors, below) requires that we impose the constraint that at least one indicator stream is monitored each year, otherwise this expansion factor is Inf. Therefore, if *z*<sub>*y*, *j*</sub> = 0 for all indicator streams in a year, we randomly select one indicator stream to be monitored.
-
-The observed catch to the entire CU in return year *t* is observed with log-normal error:
-
-$$ \\hat{C}\_{t} = C\_{t} \\; \\exp (\\chi\_{t}) $$
- where $\\chi\_t \\sim N(\\bar{\\chi} - 0.5 \\sigma^2\_\\chi, \\; \\sigma\_\\chi^2)$), *σ*<sub>*χ*</sub> is the standard deviation in catch error, and $\\bar{\\chi}$ is a bias in catch. We assume a base case of $\\bar{\\chi}=0$, but this bias in catch can be adjusted simulate a scenario where (1) fish are caught from other CUs (catch overestimated = positive bias), or (2) fish from the focal CU that were caught in other fisheries (catch underestimated = negative bias), but for the base case simulations I have left as zero.
-
-For this project, we are assuming average age-at-return is applied in run reconstruction, but this "observed age-at-return" may have error associated with it. Previous models (e.g., Holt et al. 2018 CSAS) have included error in the "estimated age-at-return" for each return year, where the mean is the true age-at-return, but for the central coast chum, annual age-at-return data are rarely available and so the average is used. We apply observation error to get an average age-at-return that is applied in run reconstruction:
-
-$$ \\hat{pr}\_{g} = \\frac{\\bar{p}\_g \\! \\exp ({\\bar{\\omega}\_{pr} \\, \\varepsilon\_{g}})}{\\sum\_{G = 3}^{5} \\bar{p}\_G \\! \\exp ({\\bar{\\omega}\_{pr} \\, \\varepsilon\_{G}})} $$
-
-where $\\bar{p}\_g$ is the average age-at-return applied in the population submodel.
-
-**There are several other possible approaches here that might make more sense, but add some complexity:** 1. minor variation: use the average of the true ages `ppnAge` as the means; 2. sub-sample from the true porportion `ppnAge` in some way that reflects the actual number of years that are used in these calculations. 3. sub-sample from the true porportion `ppnAge` AND apply observation error, then calculate mean. **Discuss.**
-
-Assessment sub-model
---------------------
-
-### Expansion factors
-
-For stock-recruit benchmarks, time-series of aggregate spawners to the CU and catch are needed in order to calculate recruitment for a given brood year. For central coast chum salmon that tend to return as 3, 4, or 5 year-olds, these time-series need to be continuous as one year of missing data will result in multiple years of missing stock-recruit pairs. In order to calculate harvest rates from the total onserved catch, $\\hat{C}\_{t}$, an estimate of the total number of spawners is required from indicator streams, non-indicator streams, and streams not monitored. To get this, the observed number of spawners from indicator streams is multiplied by three expansion factors. In the model, each of these expansion factors is calculated and applied separately using functions derived from LGL's North & Central Coast Salmon Database (NCCSDB) package (Challenger 2018).
-
-Expansion Factor I, *F*′<sub>*y*/*d*</sub>, expands the observed spawner abundances in indicator streams to account for indicator streams that are not monitored in a given year. It is calculated for each year *y* within decade *d* of the spawner time series, and relies on a decadal contribution of each indicator stream to the total escapement to all indicator streams (*P*<sub>*d*, *i*</sub>). The calculation of this decadal contribution requires at least one estimate from each indicator stream for the decade. If a decade does not contain sufficient information (i.e., one or more indicator streams are not monitored at all in a decade), then a reference decade is used to calculate *P*<sub>*d*, *i*</sub>. This reference decade is chosen using the `refDecade` function found in `expansionFactors.R` based on the criteria of the `ExpFactor1RefDecade` function in the NCCSDB package (Challenger 2018). Specifically, the reference decade is chosen to be: 1. The closest decade (historical or future) with sufficient information. 2. Failing (1), select the 20-year period from 1980-1999.
-
-For each decade (or reference decade if insufficient information) *d*, the `ExpFactor1` function calculates the average number of spawners returning to indicator stream *i* in decade *d* as:
-
-$$ \\bar{S}\_{d,i} = \\frac{\\sum\_{y=1}^{Y\_{d,i}} \\hat{S}\_{y/d,i}}{Y\_{d,i}} $$
-
-where *Y*<sub>*d*, *i*</sub> is the number of years for which spawner estimates are available within decade *d* for stream *i*. From the average number of spawners for all indicator streams, the decadal proportional contribution of each indicator stream is calculated as:
-
-$$ P\_{d,i} = \\frac{\\bar{S}\_{d,i}}{\\sum\_{i=1}^I \\bar{S}\_{d,i}} $$
-
-where *I* is the total number of indicator streams.
-
-Expansion Factor I is then calculated for each year within the decade *y*/*d* based on the decadal contributions and which streams were monitored or not in a given year:
-
-$$ F'\_{y/d}  = \\left(\\sum\_{i=1}^I \\left\\{ P\_{d,i} \\; w\_{y/d,i} \\right\\} \\right) ^{-1}$$
-
-where *w*<sub>*y*/*d*, *i*</sub> is 1 if stream *i* is monitored in year *y* and 0 if stream *i* is not monitored in year *y*. The value of *F*′<sub>*y*/*d*</sub> returned by the `ExpFactor1` function is then multiplied by the sum of the observed spawners in all indicator streams to yield the expanded estimate of spawner abundances in all indicator streams for the CU:
-
-$$ S'\_{y/d} = F'\_{y/d} \\sum\_{i=1}^I \\hat{S}\_{y,i}. $$
-
-Expansion Factor II, *F*″<sub>*d*</sub> expands the escapement to all indicator streams, *S*′<sub>*y*</sub>, to account for non-indcator streams. Unlike Expansion Factor I, this is calculated for each decade (rather than each year) and then applied to all years within a decade. Like Expansion Factor I, there needs to be sufficient information within the given decade in order to calculate *F*″<sub>*d*</sub>, or else a reference decade is chosen. **Currently, the criteria for a decade to have 'sufficient information' is the same for Expansion Factor I: that each *indicator* stream must be monitored at least once within a decade. This was based on the documentation in the `ExpansionFactor2` function in the NCCSDB manual, but it was not entirely clear from that documentation what constituted 'sufficient information'. In reality, these calls are made based on expert opinion and there are not firm criteria, but it's hard to implement expert opinion in a simulation model!** Expansion Factor II is returned by the `ExpFactor2` function, and calculated as:
-
-$$ F^{''}\_{d} = \\frac{\\sum\_{i=1}^I \\bar{S}\_{d,i} + \\sum\_{j=1}^J \\bar{S}\_{d,j}}{\\sum\_{i=1}^I \\bar{S}\_{d,i}}$$
-
-where $\\bar{S}\_{d,i}$ and $\\bar{S}\_{d,j}$ are the deacdal average number of spawners in indicator and non-indicator streams, respectively, calculated as given above for Expansion Factor I. *J* is the total number of non-indicator streams. \*\* Note this equation differs from that given for the `ExpansionFactor2` function in the NCCSDB manual which shows a different value of Expansion Factor II for each year, y, but I think that's just a typo?\*\* The adjusted total number of spawners in both indicator and non-indicator streams is then calculated as:
-
-*S*<sub>*y*/*d*</sub><sup>″</sup> = *F*<sub>*d*</sub><sup>″</sup> *S*<sub>*y*/*d*</sub><sup>′</sup>
-
-Finally, the number of spawners to both indicator and non-indicator streams, $ S^{''}\_{y/d}$ is multiplied by Expansion Factor III to account for streams that are never monitored and for observer (in)efficiency. Expansion Factor III is determined by the regional DFO staff familiar with the escapement monitoring techniques used in each statistical area and is given as *F*<sup>‴</sup> = 1.5 for all north and central coast chum CUs in Table A3 and A4 of [English et al. (2016)](https://salmonwatersheds.ca/library/lib_435/). In the model, `ExpFactor3` is supplied in the `simPar` parameters passed to the `recoverySim` function. The final expanded number of spawners (i.e., escapement) to the CU for year *y* is given by *S*<sub>*y*</sub><sup>‴</sup> = *F*<sup>‴</sup>*S*<sub>*y*/*d*</sub><sup>″</sup>.
-
-### Reconstructing recruitment
-
-The observed number of salmon returning in year *t* is the sum of observed catch and expanded escapement to the CU:
-
-$$ \\hat{R}\_t = \\hat{C}\_t + S^{'''}\_{t}$$
- Observed recruitment for brood year *y* (`obsRecruitsBY`) is then calculated as the sum of age 3, 4, and 5 fish returning in years *y* + 3, *y* + 4, and *y* + 5, respectively:
-
-$$ \\hat{R}^{'}\_{y} = \\hat{R}\_{y+3} \\hat{pr}\_{3} + \\hat{R}\_{y+4} \\hat{pr}\_{4} + \\hat{R}\_{y+5} \\hat{pr}\_{5},$$
-
-yielding the reconstructed spawner-recruit pairs for brood year *y*: *S*<sub>*y*</sub><sup>‴</sup> (`spawnersExp3`) and $\\hat{R}^{'}\_{y}$ (`obsRecruitsBY`).
-
-### Calculating benchmarks
-
-Upper and lower benchmarks for the stock-recruit and percentile metrics are calculated from both the reconstructed spawner-recruit pairs (above) and the "true" data. **For now, I am using the full spawner data wihtout observation error (`spawners`) and the true recruits by brood year (`recruitsBY`), removing the first 7 years of initialization, but if one wanted to assess the effect of different expansion factors independently, then other "true" datasets may be used.** These benchmarks are outlined below for completeness, but descriptions can also be found elsewhere (e.g., [Connors et al. 2018](https://salmonwatersheds.ca/library/lib_442/), Holt et al. 2018).
-
-#### Stock-recruit benchmarks
-
-In order to calculate stock-recruit benchmarks, a simplified version of the Ricker model presented above is fit to the data using linear regression to estimate parameters $\\hat{a}$, $\\hat{b}\_{CU}$, and *σ*<sub>*ϵ*</sub> for the CU:
-
-log(*R*<sub>*y*</sub>/*S*<sub>*y*</sub>)=*a* − *b*<sub>*C**U*</sub>*S*<sub>*y*</sub> + *ϵ*<sub>*y*</sub>
- where *R* is recruitment to the entire CU from brood year *y*, *S*<sub>*y*</sub> is the spawner abundance for the entire CU in year *y*, and *ϵ*<sub>*y*</sub> ∼ *N*(0, *σ*<sub>*ϵ*</sub>) is combined observation and process error. (Density dependence parameter *b*<sub>*C**U*</sub> is used to distinguish from the subpopulation-level parameter *b* applied in the population submodel.)
-
-The upper stock-recruit benchmark is *S*<sub>*M**S**Y*</sub>, or the spawner abundance projected to maintain long-term maximum sustainable yield from a population with Ricker dynamics. *S*<sub>*M**S**Y*</sub> is calculated from the estimated Ricker parameters as:
-
-$$S\_{MSY} =  \\frac{1 - W(e^{1 - \\hat{a})}}{\\hat{b}\_{CU}}$$
-
-where *W*(*z*) is the Lambert W function [(Scheuerell 2016)](https://peerj.com/articles/1623). We calculate *S*<sub>*M**S**Y*</sub> using the `calcSmsy` function, which draws on the `lambert_W0` function from the `gsl` library [(Hankin 2006)](https://cran.r-project.org/web/packages/gsl/vignettes/gslpaper.pdf).
-
-The lower stock recruit benchmark is *S*<sub>*G**E**N*1</sub>, or the spawner abundances that would result in recovery to *S*<sub>*M**S**Y*</sub> within one generation. There is no explicit solution for *S*<sub>*G**E**N*1</sub>, and so we use numerical optimization (`optimize` in R) to minimize the difference between *S*<sub>*M**S**Y*</sub> above and the projected $\\hat{S}\_{MSY}$ for proposed values of *S*<sub>*G**E**N*1</sub> over the interval (0, *S*<sub>*M**S**Y*</sub>). See `Sgen.optim` and `calcSgen` functions.
-
-#### Percentile benchmarks
-
-The upper and lower benchmarks for the percentile metric are simply the 25% and 75% quantiles of historic spawner abundance (e.g., *S*<sub>*y*</sub><sup>‴</sup> or `spawnersExp3` in the case of observed data), calculated using the `quantile` function.
-
-#### Assessing population status
-
-To assess the CU as red, amber, or green, the geometric mean spawner abundance over the most recent generation (i.e., 5 years for chum salmon) is compared to the upper and lower benchmarks for each metric using the stoplight approach outlined in Canada's Wild Salmon Policy [(DFO 2005)](https://www.pac.dfo-mpo.gc.ca/fm-gp/species-especes/salmon-saumon/wsp-pss/policy-politique/index-eng.html).
-
-<!-- In the code, this is done by applying the `assessPop` function to true and observed (i.e., reconstructed) stock-recruit data, yielding the status assessments and benchmark values for true and observed cases. -->
-Performance sub-model
----------------------
-
-Performance is evluated using two metrics that capture the difference between observed and true status assessments:
-
-1.  Bias (mean raw error; observed - true) and precision (mean absolute error) of derived benchmarks (upper and lower for both percentile and stock-recruitment);
-
-2.  Percentage of simulations where status is erroneously assigned to red, amber, and green status zones. For this performance metric, we distinguish errors in assessment that over- and under-estimate status by assigning the following "status codes" that can be analysed in various ways (Fig. 2). For example, the `plotStatusDiff` function takes a vector of the status codes for all MCMC simulations and plots the proportion of simulations on a matrix like that shown in Fig. 2.
-
-![The status codes used to indicate if and how the observed status differed from true status. These can be combined to calculate the proportion of simualtions that were 'wrong' (i.e., status codes 4 -9) or more specificially, whether observed status over or under-estimated population health.](performance.png)
-
-In practice, we are interested in the combined impact of all run-reconstruction assumptions on status assessments, and so observed status will be compared to the true status given perfect knowledge of spawner abundances and true recruitment to the CU. **However, in order to inform future modelling work and/or data collection, we will also separate the relative impact of the different assumptions by comparing observed status to different baselines. For example, in order to isolate the impact of Expansion Factor III for observer efficiency, the observed status can be compared to the status calculated with zero observation error but the same monitoring coverage, harvest rates, and age-at-return assumptions. How to isolate the impact of different assumptions and sources of variability will require careful consideration, and has yet to be implemented in the model**
+runSims
+-------
+
+This folder contains the code to run simulations specific to the run-reconstruction project and reproduce output described in the associated paper. It may be useful as a reference for future studies, and could be altered to explore sensitivity of assessments to additional model parameters. This folder contains the following files:
+
+-   `runSim.R` produces the three base-case results and loops through the three base cases, performing all sensitivity analyses under each base case. The output of each sensitivity analysis is saved as a RDS file that can be loaded for plotting.
+-   `runSensitivity.R` contains three functions that run multiple MC simulations over a range of parameter values for sensitivity analyses. It contains the following functions:
+    -   `makeParList` takes a range of values for a single parameter and returns a list of parameter sets with the focal parameter changed in each element. Useful for simple univariate sensitivity analyses.
+    -   `runSensitivity` takes a list of parameter sets (can be from `makeParList` above) and runs multiple MC simulations of `reconstrSim()` for each parameter set (i.e., element) in that list.
+    -   `delistSensitivity` delists the output from `runSensitivity` so that RB and proportion of simulations with correct or misclassified status can be easily plotted over the different parameter sets.
+-   `nSims.R` constains code to run 10 000 MC simulations and determine the number of simulations necessary to ensure that the error in performance metrics is less than 3%.
+-   `figures.R` contains code to source the RDS output from `runSim.R` and plot the figures included in the paper.
+
+data
+----
+
+This folder contains the data used to parameterize the simulation model and the full suite of base case parameters applied.
+
+-   `baseSimPar.csv` contains the base-case parameters applied in simulations.
+-   `ageAtReturn.R` reads in data from the NCCSDBV2 (`nccdbv2_age-composition-data.csv`) and calculates average for central coast chum.
+-   `rickerParams.R` reads in river-level stock-recruitment data for north and central coast chum salmon (`NCC_chum_streams_SR_data.csv`) and calculates Ricker parameters for simulating true subpopulation dynamics based on central coast chum.
+-   `monitoring.R` looks at the four real monitoring coverage scenarios (A-D) calling on data from `English2016_monitoringCoverage.csv` and `NCC_chum_streams_SR_data.csv` and plots the coverage over time under these different scenarios.
+-   `harvestRate.R` takes data on exploitation rates downloaded from the Pacific Salmon Explorer (`PSE_chumExploitationRate.csv`) and plots trends over time AND calculates parameters of the simple harvest control rule using data from the Pacific Salmon Explorer on total run size (`PSE_chumSpawnerAbundanceAndTotalRunSize.csv`) and from the NCCSDBV2 on escapement (`nccdbv2_NCCStreamEscapement.csv`)
