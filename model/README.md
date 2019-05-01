@@ -10,7 +10,7 @@ The R code in this repository simulates a stochastic model of salmon population 
 Running a simulation
 --------------------
 
-The `recoverySim` function found in `reconstrSimulator.R` runs a single MC simulation of the model outlined in Fig. 1. The various parameters and controls are passed to this function in a named vector called `simPar` that can be read from a .csv file. Several examples of parameters used in the simulations for this project can be found in the `data` folder. The following description outlines the components within the `recoverySim` function, relating parts of the code to the mathematical equations for population dynamics, observation, and assessment of the hypothetical chum salmon CU. **Note that the equations may not display properly in the GitHub markdown doc, in which case refer to the modelDescription.pdf version of this document.**
+The `recoverySim` function found in `reconstrSimulator.R` runs a single MC simulation of the model outlined in Fig. 1. The various parameters and controls are passed to this function in a named vector called `simPar` that can be read from a .csv file. Several examples of parameters used in the simulations for this project can be found in the `data` folder. The following description outlines the components within the `recoverySim` function, relating parts of the code to the mathematical equations for population dynamics, observation, and assessment of the hypothetical chum salmon CU. **Note that the equations may not display properly in the GitHub markdown doc, in which case refer to the pdf version of teh README document in the model folder.**
 
 Setup
 -----
