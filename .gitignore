@@ -44,6 +44,11 @@ README.tex
 Rplots.pdf
 
 # large datasets
+model/modelDescription.Rmd
+model/model.png
+model/performance.png
+
+# large datasets
 data/NUSEDS_20190117.csv
 data/NCC_chum_streams_SR_data.csv
 
