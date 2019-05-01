@@ -45,8 +45,6 @@ Rplots.pdf
 
 # large datasets
 model/modelDescription.Rmd
-model/model.png
-model/performance.png
 model/.DS_Store
 
 # large datasets
