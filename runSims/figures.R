@@ -4,24 +4,34 @@ statusCols <- c(g = "#8EB687", a = "#DFD98D", r = "#B66A64")
 ###############################################################################
 # Base case simulations
 ###############################################################################
+simPar_base <- list(simPar_all[simPar_all$scenario == "baseGreen",], simPar_all[simPar_all$scenario == "baseAmber",], simPar_all[simPar_all$scenario == "baseRed",])
 
-# out_base <- readRDS("workspaces/base100Mon_delisted_baseGreen.rds")
+set.seed(8293)
+out_base <- runSensitivity(parList = simPar_base, nSim = 4000, nCores = 3)[[1]]
 
-all3 <- TRUE
 
-if(all3 == FALSE){
+cases2plot <- c(1,3)
+
+if(length(cases2plot) == 1){
 	quartz(width = 6.3, height= 3, pointsize = 10)
-	I <- 1
+	I <- cases2plot
 	layout(matrix(c(2,1,1,2,1,1,7,3,3,5,4,4,5,4,4,8,6,6), nrow=3))
+} else if (length(cases2plot) == 2){
+	quartz(width = 6.3, height = 5.5, pointsize=10)
+	I <- cases2plot
+	layout(matrix(c(rep(c(2,1,1,8,7,7), 2), 13,3,3,15,9,9, rep(c(5,4,4,11,10,10),2), 14,6,6,16,12,12), nrow=6))
 } else {
 	quartz(width = 6, height= 7, pointsize = 9)
 	par(oma=c(0,3.5,2,0))
-	I <- 1:3
+	I <- cases2plot
 	layout(matrix(c(rep(c(2,1,1,8,7,7,14,13,13), 2), 19,3,3,21,9,9,23,15,15, rep(c(5,4,4,11,10,10,17,16,16),2), 20,6,6,22,12,12,24,18,18), nrow=9))
 }
+ par(oma=c(0,4,2,0))
 
+ lc <- 0
 for(i in I){
 for(k in 1:2){
+	lc <- lc+1
 	# Base case results
 	statusDiff <- out_base[[i]][[k+1]][, 3]
 	# statusDiff <- out_base[[i]]$HS[, 3]
@@ -68,7 +78,7 @@ for(k in 1:2){
 	}
 	
 	if(k==1 & all3 == TRUE){
-		mtext(side=2, line = 6, c("High productivity\nHCR", "Low productivity\nModerate harvest", "Low productivity\nHigh harvest")[i], cex=0.8, font=2)
+		mtext(side=2, line = 6, c("High productivity\nHarvest Control Rule", "Low productivity\nModerate constant harvest", "Low productivity\nHigh constant harvest")[i], cex=0.8, font=2)
 	}
 	
 	par(mar=c(0,5,4,0))
@@ -76,11 +86,11 @@ for(k in 1:2){
 	bp <- barplot(TR, col=statusCols[c('r', 'a', 'g')], yaxt="n", names.arg = FALSE)
 	text(bp, TR, pos=3, paste(formatC(round(TR*100, 1), 1, format="f"), "%"), xpd=NA)
 	
-	if(all3 == FALSE){
-		mtext(side = 3, adj = 0, line=2, c("a) Spawner-recruitment", "b) Historical spawners")[k], cex=0.8)
+	if(length(cases2plot) == 1){
+		mtext(side = 3, adj = 0, line=2, c("a) Stock-recruitment", "b) Historical spawners")[k], cex=0.8)
 	} else {
-		mtext(side = 3, adj = 0, line=2, paste(letters[(i-1)*2 +k], ")", sep=""), cex=0.8)
-		if(i==1) mtext(side=3, line=3.5, c("Spawner-recruitment", "Historical spawners")[k], cex=0.8, font = 2)
+		mtext(side = 3, adj = 0, line=2, paste(letters[lc], ")", sep=""), cex=0.8)
+		if(i==1) mtext(side=3, line=3.5, c("Stock-recruitment", "Historical spawners")[k], cex=0.8, font = 2)
 	}
 	
 	par(mar=c(5,0,0,4))
@@ -98,31 +108,39 @@ for(k in 1:2){
 
 delistedOut <- delistSensitivity(out_base)
 
+cases2plot <- c(1,3)
+
 quartz(width = 6, height= 3, pointsize = 9)
 # layout(matrix(c(1,2,3,3), nrow=2, byrow=2))
 par(mfrow=c(1,2), mar=c(3, 4, 1, 1), oma=c(2,3.5,2,2))
 
 # RBs
 
-x <- c(1:3)
-jit <- 0.1
-ptCex <- 1
+if(length(cases2plot) == 3){
+	x <- c(1:3)
+	jit <- 0.1
+} else if(length(cases2plot) == 2){
+	x <- c(1.25, 2.75)
+	jit <- 0.15
+}
+	ptCex <- 1
+	
 
-plotCI(x, delistedOut$RB$Sgen1[, 'median'], "n", li = delistedOut$RB$Sgen1[, '25th'], ui= delistedOut$RB$Sgen1[, '75th'], yaxt="n", col=NA, ylab="", xlab="", xaxt="n", xlim=c(0.5, 3.5))
+plotCI(x, delistedOut$RB$Sgen1[cases2plot, 'median'], "n", li = delistedOut$RB$Sgen1[cases2plot, '25th'], ui= delistedOut$RB$Sgen1[cases2plot, '75th'], yaxt="n", col=NA, ylab="", xlab="", xaxt="n", xlim=c(0.5, 3.5))
 
 axis(side=1, at=x, labels=FALSE)
 u <- par('usr')
-text(x, rep(u[3] - 0.1*(u[4]-u[3]), 3), c("high", "low", "low"), xpd=NA)
+text(x, rep(u[3] - 0.1*(u[4]-u[3]), 3), c("high", "low", "low")[cases2plot], xpd=NA)
 text(0, u[3] - 0.1*(u[4]-u[3]), "productivity:", xpd=NA, adj=1, font=2)
-text(x, rep(u[3] - 0.2*(u[4]-u[3]), 3), c("HCR", "moderate", "high"), xpd=NA)
+text(x, rep(u[3] - 0.2*(u[4]-u[3]), 3), c("HCR", "constant moderate", "constant high")[cases2plot], xpd=NA)
 text(0, u[3] - 0.2*(u[4]-u[3]), "target harvest:", xpd=NA, adj=1, font=2)
 abline(h=0)
 
-plotCI(x - jit, delistedOut$RB$Sgen1[, 'median'], "n", li = delistedOut$RB$Sgen1[, '25th'], ui= delistedOut$RB$Sgen1[, '75th'], gap=0, sfrac = 0, col=statusCols['r'], cex=ptCex, pch=25, pt.bg=statusCols['r'], add=TRUE)
+plotCI(x - jit, delistedOut$RB$Sgen1[cases2plot, 'median'], "n", li = delistedOut$RB$Sgen1[cases2plot, '25th'], ui= delistedOut$RB$Sgen1[cases2plot, '75th'], gap=0, sfrac = 0, col=statusCols['r'], cex=ptCex, pch=25, pt.bg=statusCols['r'], add=TRUE)
 
-plotCI(x + jit, delistedOut$RB$Smsy[, 'median'], li = delistedOut$RB$Smsy[, '25th'], ui=delistedOut$RB$Smsy[, '75th'], gap=0, sfrac = 0, add=TRUE, col=statusCols['g'], cex=ptCex, pch=24, pt.bg=statusCols['g'])
+plotCI(x + jit, delistedOut$RB$Smsy[cases2plot, 'median'], li = delistedOut$RB$Smsy[cases2plot, '25th'], ui=delistedOut$RB$Smsy[cases2plot, '75th'], gap=0, sfrac = 0, add=TRUE, col=statusCols['g'], cex=ptCex, pch=24, pt.bg=statusCols['g'])
 
-plotCI(x, delistedOut$RB$avgS[, 'median'], li = delistedOut$RB$avgS[, '25th'], ui= delistedOut$RB$avgS[, '75th'], gap=0, sfrac = 0, add=TRUE, cex=ptCex, pch=21, pt.bg=1)
+plotCI(x, delistedOut$RB$avgS[cases2plot, 'median'], li = delistedOut$RB$avgS[cases2plot, '25th'], ui= delistedOut$RB$avgS[cases2plot, '75th'], gap=0, sfrac = 0, add=TRUE, cex=ptCex, pch=21, pt.bg=1)
 
 A <- axis(side=2, labels = FALSE)
 axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
@@ -130,25 +148,25 @@ mtext(side=2, line=4, "Relative bias")
 
 legend("topright", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN1])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), bty="n", pt.cex = ptCex, pt.bg = c(statusCols['r'], 1, statusCols['g']))
 
-mtext(side=3, line=0.5, adj=0, "a) Spawner-recruitment")
+mtext(side=3, line=0.5, adj=0, "a) Stock-recruitment")
 
 # Historical spawners
 
-yAll <- c(delistedOut$RB$S25[, '25th'], delistedOut$RB$S25[, '75th'], delistedOut$RB$S55[, '25th'], delistedOut$RB$S50[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th'])
+yAll <- c(delistedOut$RB$S25[cases2plot, '25th'], delistedOut$RB$S25[cases2plot, '75th'], delistedOut$RB$S55[cases2plot, '25th'], delistedOut$RB$S50[cases2plot, '75th'], delistedOut$RB$avgS[cases2plot, '25th'], delistedOut$RB$avgS[cases2plot, '75th'])
 
-plotCI(x, delistedOut$RB$S25[, 'median'], "n", li = delistedOut$RB$S25[, '25th'], ui= delistedOut$RB$S25[, '75th'], yaxt="n", col=NA, ylab="", xlab="", xaxt="n", ylim=range(yAll), xlim=c(0.5, 3.5))
+plotCI(x, delistedOut$RB$S25[cases2plot, 'median'], "n", li = delistedOut$RB$S25[cases2plot, '25th'], ui= delistedOut$RB$S25[cases2plot, '75th'], yaxt="n", col=NA, ylab="", xlab="", xaxt="n", ylim=range(yAll), xlim=c(0.5, 3.5))
 
 axis(side=1, at=x, labels=FALSE)
 u <- par('usr')
-text(x, rep(u[3] - 0.1*(u[4]-u[3]), 3), c("high", "low", "low"), xpd=NA)
-text(x, rep(u[3] - 0.2*(u[4]-u[3]), 3), c("HCR", "moderate", "high"), xpd=NA)
+text(x, rep(u[3] - 0.1*(u[4]-u[3]), 3), c("high", "low", "low")[cases2plot], xpd=NA)
+text(x, rep(u[3] - 0.2*(u[4]-u[3]), 3), c("HCR", "constant moderate", "constant high")[cases2plot], xpd=NA)
 abline(h=0)
 
-plotCI(x - jit, delistedOut$RB$S25[, 'median'], "n", li = delistedOut$RB$S25[, '25th'], ui= delistedOut$RB$S25[, '75th'], gap=0, sfrac = 0, col=statusCols['r'], cex=ptCex, pch=25, pt.bg=statusCols['r'], add=TRUE)
+plotCI(x - jit, delistedOut$RB$S25[cases2plot, 'median'], "n", li = delistedOut$RB$S25[cases2plot, '25th'], ui= delistedOut$RB$S25[cases2plot, '75th'], gap=0, sfrac = 0, col=statusCols['r'], cex=ptCex, pch=25, pt.bg=statusCols['r'], add=TRUE)
 
-plotCI(x + jit, delistedOut$RB$S50[, 'median'], li = delistedOut$RB$S50[, '25th'], ui=delistedOut$RB$S50[, '75th'], gap=0, sfrac = 0, add=TRUE, col=statusCols['g'], cex=ptCex, pch=24, pt.bg=statusCols['g'])
+plotCI(x + jit, delistedOut$RB$S50[cases2plot, 'median'], li = delistedOut$RB$S50[cases2plot, '25th'], ui=delistedOut$RB$S50[cases2plot, '75th'], gap=0, sfrac = 0, add=TRUE, col=statusCols['g'], cex=ptCex, pch=24, pt.bg=statusCols['g'])
 
-plotCI(x, delistedOut$RB$avgS[, 'median'], li = delistedOut$RB$avgS[, '25th'], ui= delistedOut$RB$avgS[, '75th'], gap=0, sfrac = 0, add=TRUE, cex=ptCex, pch=21, pt.bg=1)
+plotCI(x, delistedOut$RB$avgS[cases2plot, 'median'], li = delistedOut$RB$avgS[cases2plot, '25th'], ui= delistedOut$RB$avgS[cases2plot, '75th'], gap=0, sfrac = 0, add=TRUE, cex=ptCex, pch=21, pt.bg=1)
 
 A <- axis(side=2, labels = FALSE)
 axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
@@ -748,3 +766,87 @@ text(11, 30, "indicator", font=2, col=indCol['ind'])
 text(11, 27, "non-indicator", font=2, col=indCol['nonInd'])
 
 mtext(side=3, line=0.5, adj=0, "b) Capacity")
+
+
+###############################################################################
+# Inter-annual variability in age-at-return
+###############################################################################
+
+# Don't need to include historical spawners here because does not 
+# affect spawner estimates, only SR relationship.
+
+delistedOut.all <- list(); length(delistedOut.all) <- 3
+delistedOut.all[[1]] <- readRDS("workspaces/ageErr_delisted_baseGreen.rds")
+delistedOut.all[[2]] <- readRDS("workspaces/ageErr_delisted_baseAmber.rds")
+delistedOut.all[[3]] <- readRDS("workspaces/ageErr_delisted_baseRed.rds")
+# ageErr <- seq(0.1, 0.9, 0.1)
+ageErr <- seq(0.2, 1.6, 0.2)
+
+sensitivityPar <- ageErr
+baseValue <- 0.8
+
+#------------------------------------------------------------------------------
+# Plot
+
+quartz(width = 6.3, height= 3.6, pointsize = 10)
+par(mfcol=c(2,3), mar=c(3, 4, 1, 1), oma=c(1,1,3,0))
+
+for(s in 1:3){ # For each base case
+	delistedOut <- delistedOut.all[[s]]
+	
+	# Ppn Wrong
+	j <- 1
+	bp <- barplot(t(delistedOut$ppn[[j]]), col=c(statusCols, grey(0.8), 1), las=1, ylab = "", space=0.1, border=NA, xaxs="i", yaxs="i")
+	
+	axis(side = 1, at = bp[seq(1, length(bp), 2)], labels=formatC(ageErr[seq(1, length(ageErr),2)], 1, format="f"))
+	
+	points(bp[findInterval(baseValue, sensitivityPar)], 1.05, pch=8, xpd=NA)
+	if(s == 1) mtext(side=2, line = 4, "Proportion of simulations", cex=0.8)
+	mtext(side=3, line=0.5, adj=0, c("a)", "c)", "e)")[s], cex=0.8)
+	
+	mtext(side = 3, line = 1.5, c("High productivity\nHarvest Control Rule", "Low productivity\nModerate harvest", "Low productivity\nHigh harvest")[s], cex=0.8, font=2)
+	
+	# RBs
+	jit <- 0.015
+	ptCex <- 1
+	
+	# Spawner-recruitment
+	yAll <- range(c(delistedOut$RB$Sgen1[, '75th'], delistedOut$RB$Sgen1[, '25th'], delistedOut$RB$Smsy[, '25th'], delistedOut$RB$Smsy[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th']))
+	
+	
+	plotCI(sensitivityPar, delistedOut$RB$Sgen1[, 'median'], "n", li = delistedOut$RB$Sgen1[, '25th'], ui= delistedOut$RB$Sgen1[, '75th'], yaxt="n", col=NA, ylab="", xlab="", xaxt="n", ylim=yAll, xlim=c(0.15, 1.65))
+	axis(side=1, at = ageErr[seq(1, length(ageErr),2)])
+	abline(v = baseValue, lwd=10, col=grey(0.8))
+	abline(h=0)
+	
+	plotCI(sensitivityPar - jit, delistedOut$RB$Sgen1[, 'median'], "n", li = delistedOut$RB$Sgen1[, '25th'], ui= delistedOut$RB$Sgen1[, '75th'], gap=0, sfrac = 0, col=statusCols['r'], cex=ptCex, pch=25, pt.bg=statusCols['r'], add=TRUE)
+	plotCI(sensitivityPar + jit, delistedOut$RB$Smsy[, 'median'], li = delistedOut$RB$Smsy[, '25th'], ui=delistedOut$RB$Smsy[, '75th'], gap=0, sfrac = 0, add=TRUE, col=statusCols['g'], cex=ptCex, pch=24, pt.bg=statusCols['g'])
+	plotCI(sensitivityPar, delistedOut$RB$avgS[, 'median'], li = delistedOut$RB$avgS[, '25th'], ui= delistedOut$RB$avgS[, '75th'], gap=0, sfrac = 0, add=TRUE, cex=ptCex, pch=21, pt.bg=1)
+	
+	A <- axis(side=2, labels = FALSE, at=c(0, 0.4, 0.8, 1.2))
+	axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
+	if(s==1) mtext(side=2, line=4, "Relative bias", cex=0.8)
+	
+	mtext(side=3, line=0.5, adj=0, c("b)", "d)", "f)")[s], cex=0.8) 
+	if(s==2) mtext(side=1, expression(paste("Interannual variability in age-at-maturity (", bar(omega), ")")), line=3)
+	
+}
+
+#-----------
+# How variable is this really?
+ppnAge <- list(
+	ppnAgeErr(ppnAgeVec = c(0, 0.23, 0.64, 0.13, 0), omega = 0.2, nYears = 1000), 
+	ppnAgeErr(ppnAgeVec = c(0, 0.23, 0.64, 0.13, 0), omega = 0.8, nYears = 1000),
+	ppnAgeErr(ppnAgeVec = c(0, 0.23, 0.64, 0.13, 0), omega = 1.6, nYears = 1000) 
+)
+
+par(mfrow=c(3,1), mar=c(4,4,2,1))
+for(i in 1:3){
+	hist(ppnAge[[i]][, 3], xlim=c(0, 1), col="#FF000050", border=NA, main=substitute(paste(bar(omega)==o), list(o = c(0.2, 0.8, 1.6)[i])), las=1, xlab="", breaks=seq(0, 1, 0.02), ylim=c(0, 250), cex.lab=1.2, cex.axis=1.2)
+	hist(ppnAge[[i]][, 2], xlim=c(0, 1), col="#00FF0050", border=NA, add=TRUE, breaks=seq(0, 1, 0.02))
+	hist(ppnAge[[i]][, 4], xlim=c(0, 1), col="#0000FF50", border=NA, add=TRUE, breaks=seq(0, 1, 0.02))
+	abline(v = c(0.23, 0.64, 0.13), col=c(3,2,4))
+	if(i==1) legend('topright', lwd=1, col=c(3,2,4), legend=c("Age 3", "Age 4", "Age 5"), bty="n", cex=1.2)
+	mtext(side=3, line=0.5, adj=0, paste(letters[i], ")", sep=""))
+}
+mtext(side=1, "Proportion of recruits", line=3)

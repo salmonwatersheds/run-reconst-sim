@@ -166,14 +166,14 @@ plot(dat.fit$totalRun,dat.fit$harvestRate, col = grey(0.7), las=1, xlab="", ylab
 mtext(side=1, line=2.5, "Total return (millions)")
 axis(side=1, at=seq(0, 1.5*10^6, 0.5*10^6), labels = c("0.0", "0.5", "1.0", "1.5"))
 axis(side=2, at=c(0, 0.3, 0.6), las=1)
-axis(side=2, at=coefficients(fit.all)['hmax'], labels=expression(paste(italic(h[MAX]))), las=1, cex.axis=0.8, col="dodgerblue3", col.axis="dodgerblue3")
+axis(side=2, at=coefficients(fit.all)['hmax'], labels=expression(paste(italic(h[MAX]))), las=1, cex.axis=0.8)#, col="dodgerblue3", col.axis="dodgerblue3")
 
 lines(R.dummy, h.dummy, lwd=1.5)
-abline(h = coefficients(fit.all)['hmax'], lty=2, col="dodgerblue3")
-abline(h = 0.60, lty=3, col="dodgerblue")
+# abline(h = coefficients(fit.all)['hmax'], lty=2, col="dodgerblue3")
+abline(h = 0.60, lty=3)#, col="dodgerblue")
 legend(2*10^6, 0.80, col=grey(0.7), pch = unique(as.numeric(as.factor(dat.fit$location))), legend= unique(dat.fit$location), xpd=NA, cex=0.8, pt.cex=1, bty="n")
 
-legend(2*10^6, 0.35, lwd = c(1.5, 1, 1), lty = c(1:3), col=c(1, "dodgerblue3", "dodgerblue"), legend = c("HCR", "Moderate harvest", "High harvest"), cex=0.8, pt.cex=1, bty="n", xpd=NA)
+legend(2*10^6, 0.35, lwd = c(1.5, 1), lty = c(1,3), legend = c("Harvest Control Rule", "High constant harvest"), cex=0.8, pt.cex=1, bty="n", xpd=NA)#col=c(1, "dodgerblue3", "dodgerblue"), 
 
 #-----------------------------
 # Plot residuals over time

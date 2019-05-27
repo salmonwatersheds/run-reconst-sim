@@ -12,8 +12,7 @@ source("model/expansionFactors.R")
 source("model/benchmarkFns.R")
 source("model/performanceFns.R")
 source("model/reconstrSimulator.R")
-source("model/runSensitivity.R")
-source("model/plottingFns.R")
+source("runSims/runSensitivity.R")
 
 # Load base parameter values
 simPar_all <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
@@ -213,5 +212,27 @@ for(baseCaseNum in 1:3){
 	if(baseCaseNum == 1) saveRDS(object = out_obsBiasChange2, file="workspaces/obsBiasChange_delisted_baseGreen.rds")
 	if(baseCaseNum == 2) saveRDS(object = out_obsBiasChange2, file="workspaces/obsBiasChange_delisted_baseAmber.rds")
 	if(baseCaseNum == 3) saveRDS(object = out_obsBiasChange2, file="workspaces/obsBiasChange_delisted_baseRed.rds")
+	
+	###############################################################################
+	# Over increasing interannual variability in age-at-maturity
+	###############################################################################		
+	for(baseCaseNum in 1:3){
+		
+		if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
+		if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
+		if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
+		
+	ageErr <- seq(0.2, 1.6, 0.2)
+	
+	simPar_ageErr <- makeParList(basePar = simPar, sensName = "ageErr", sensValues = ageErr)
+	
+	out_ageErr <- runSensitivity(parList = simPar_ageErr, nSim = 4000, nCores = 8)
+	
+	print(paste("time for ageErr = ", out_ageErr[[2]]))
+	out_ageErr2 <- delistSensitivity(out_ageErr[[1]])
+	
+	if(baseCaseNum == 1) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseGreen.rds")
+	if(baseCaseNum == 2) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseAmber.rds")
+	if(baseCaseNum == 3) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseRed.rds")
 	
 } # end loop over baseCaseNum 1-3
