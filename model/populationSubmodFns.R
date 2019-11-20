@@ -132,27 +132,27 @@ ppnAgeErr <- function(ppnAgeVec, omega, nYears) {
 #' harvest rates) giving the target harvest rate
 #' @param sigmaHarvest A single value for the standard deviation in error
 #' around the target harvest rate
-#' @param nYears The number of realized harvest rates to return. If 
-#' targetHarvest is a vector, then nYears must equal length(targetHarvest)
+#' @param n The number of realized harvest rates to return. If 
+#' targetHarvest is a vector, then n must equal length(targetHarvest). May be 
+#' the number of years or number of populations.
 #' @param errorType Must be one of "beta" or "normal" specifying the error
 #' distribution for the realized harvest rates.  Default is beta.
 #' 
-#' @return Returns a numeric vector of realized harvest rates for each year 
-#' in nYears
+#' @return Returns a numeric vector of realized harvest rates for each n
 #'
 #' @examples
 #'
 #' @export
 
-realizedHarvestRate <- function(targetHarvest, sigmaHarvest, nYears = length(targetHarvest), errorType = "beta") {
+realizedHarvestRate <- function(targetHarvest, sigmaHarvest, n = length(targetHarvest), errorType = "beta") {
 	
 	# Checks
 	if(errorType != "beta" & errorType != "normal"){
 		stop("Unknown error distribution. Must be beta or normal.")
 	}
 	
-	if(length(targetHarvest) > 1 & length(targetHarvest) != nYears){
-		stop("If length(targetHarvest)>1, then must equal nYears")
+	if(length(targetHarvest) > 1 & length(targetHarvest) != n){
+		stop("If length(targetHarvest)>1, then must equal n")
 	}
 	
 	#-----------------------------
@@ -162,7 +162,7 @@ realizedHarvestRate <- function(targetHarvest, sigmaHarvest, nYears = length(tar
 		beta1 <- (targetHarvest^2 - targetHarvest^3 - sigmaHarvest^2*targetHarvest)/(sigmaHarvest^2)
 		beta2 <- (targetHarvest * (1 - targetHarvest)^2 - sigmaHarvest^2*(1 - targetHarvest))/(sigmaHarvest^2)
 		
-		harvestRate <- rbeta(n = nYears, shape1 = beta1, shape2 = beta2)
+		harvestRate <- rbeta(n = n, shape1 = beta1, shape2 = beta2)
 		
 		# BETA CHECK #1:
 		# Beta distribution requires shape parameters > 0. If this is violated, then
@@ -237,7 +237,7 @@ realizedHarvestRate <- function(targetHarvest, sigmaHarvest, nYears = length(tar
 	} else if (errorType == "normal"){
 		
 		# Equation (F19) from Holt et al. (2018 CSAS)
-		harvestRate <- targetHarvest + qnorm(runif(nYears, 0.0001, 0.9999), 0, sigmaHarvest)
+		harvestRate <- targetHarvest + qnorm(runif(n, 0.0001, 0.9999), 0, sigmaHarvest)
 		
 		# If harvest rate is < 0 or > 1, resample as in Holt et al. (2018)
 		while (length(which(harvestRate > 1 | harvestRate < 0)) > 0) {

@@ -142,26 +142,29 @@ reconstrSim <- function(simPar, seed = NULL) {
 	
 	#_____
 	# If there is a fixed target harvest rate, can calculate
-	# realized harvest rates (assumed constant across subpopulations)
+	# realized harvest rates (NOT (as of Nov 19/2019) assumed constant across 
+	# subpopulations)
 	# outside of population dynamics loop
 	
 	# Check: must have target harvest rate > 5%
 	if(is.na(simPar$targetHarvest) == FALSE & simPar$targetHarvest < 0.05){
 		stop("Target harvest rate must be > 5% for Beta error")
 	}
-	
+	# Create matrix for realized harvest rates for each year (row) and population (col):
 	if(simPar$harvContRule == "noError"){
-			harvestRate <- rep(simPar$targetHarvest, nYears)
+			harvestRate <- matrix(rep(simPar$targetHarvest, nYears*nPop), nrow = nYears, ncol = nPop)
 	} else if(simPar$harvContRule == "fixedER"){
-		harvestRate <- realizedHarvestRate(
-			targetHarvest = simPar$targetHarvest, 
-			sigmaHarvest = simPar$sigma_harvest,
-			nYears = nYears, 
-			errorType = "beta")
+		harvestRate <- matrix(
+			realizedHarvestRate(
+				targetHarvest = simPar$targetHarvest, 
+				sigmaHarvest = simPar$sigma_harvest,
+				n = nYears*nPop, 
+				errorType = "beta"),
+			nrow = nYears, ncol = nPop)
 		targetHarvest <- c(rep(0, nYears - simPar$simYears), rep(simPar$targetHarvest, simPar$simYears))
 	} else {
 		targetHarvest <- c(rep(0, nYears - simPar$simYears), rep(NA, simPar$simYears))
-		harvestRate <- numeric(nYears)
+		harvestRate <- matrix(rep(NA, nYears*nPop), nrow = nYears, ncol = nPop))
 	}
 	
 	#_____
@@ -251,15 +254,15 @@ reconstrSim <- function(simPar, seed = NULL) {
 		# If using variable harvest rate, calculate targetHarvest based on true total return
 		if(simPar$harvContRule == "variableER"){
 			targetHarvest[y] <- max(c(0.05, round(simPar$maxHarvest * (1 - exp(simPar$d * (simPar$m - sum(recruitsRY[y, ])))), 4)))
-			harvestRate[y] <- realizedHarvestRate(
+			harvestRate[y, ] <- realizedHarvestRate(
 				targetHarvest = targetHarvest[y], 
 				sigmaHarvest = simPar$sigma_harvest,
-				nYears = 1, 
+				n = nPop, 
 				errorType = "beta")
 		}
 		
-		spawners[y, ] <- (1 - harvestRate[y]) * recruitsRY[y, ]
-		trueCatch[y] <- sum(harvestRate[y] * recruitsRY[y, ])
+		spawners[y, ] <- (1 - harvestRate[y, ]) * recruitsRY[y, ]
+		trueCatch[y] <- sum(harvestRate[y, ] * recruitsRY[y, ])
 		
 		# Apply Ricker model to calculate recruits
 		dum <- rickerModel(S = spawners[y, ], 
@@ -420,7 +423,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 			RickerPar = list(a = a, b = b, Smax = Smax),
 			trueHarvest = data.frame(
 				targetHarvest = targetHarvest[(simPar$gen + 3):nYears], 
-				realizedHarvest = harvestRate[(simPar$gen + 3):nYears], 
+				realizedHarvest = harvestRate[(simPar$gen + 3):nYears, ], 
 				trueCatch = trueCatch[(simPar$gen + 3):nYears],
 				obsCatch = obsCatch[(simPar$gen + 3):nYears])
 		))
