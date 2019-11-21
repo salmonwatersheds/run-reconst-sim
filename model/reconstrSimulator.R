@@ -164,7 +164,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 		targetHarvest <- c(rep(0, nYears - simPar$simYears), rep(simPar$targetHarvest, simPar$simYears))
 	} else {
 		targetHarvest <- c(rep(0, nYears - simPar$simYears), rep(NA, simPar$simYears))
-		harvestRate <- matrix(rep(NA, nYears*nPop), nrow = nYears, ncol = nPop))
+		harvestRate <- matrix(rep(NA, nYears*nPop), nrow = nYears, ncol = nPop)
 	}
 	
 	#_____
