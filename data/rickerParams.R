@@ -52,7 +52,7 @@ for(i in 1:nR){
 #------------------------------------------------------------------------------
 
 # Scale spawners to avoid error
-datSR$Spawners_scaled <- datSR$Spawners * 10^-5
+datSR$Spawners_scaled <- datSR$Spawners# * 10^-5
 
 # Fit model with random effect on productivity by CU and river-level
 # estimates of productivity and density dependence
@@ -60,7 +60,7 @@ fit <- lmer(y ~ River + Spawners_scaled:River - 1 + (1|CU), data = datSR)
 
 # Include productivity and density dependence estimates in river-level data frame
 datLoc$prod <- as.numeric(summary(fit)$coefficients[1:nR,'Estimate'])
-datLoc$densDep <- -as.numeric(summary(fit)$coefficients[(nR+1):(2*nR),'Estimate']) * 10^-5
+datLoc$densDep <- -as.numeric(summary(fit)$coefficients[(nR+1):(2*nR),'Estimate'])# * 10^-5
 
 ###############################################################################
 # Productivity
@@ -171,7 +171,7 @@ for(i in 1:nR){
 ###############################################################################
 
 # Create matrix of river-by-river residuals
-resMat <- as.matrix(datRes[,2:(nR+1)])
+resMat <- as.matrix(datResRaw[,2:(nR+1)])
 
 # Order the corMat by CU
 o <- order(datLoc$CU, datLoc$yLAT)
