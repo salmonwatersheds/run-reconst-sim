@@ -1,18 +1,18 @@
-﻿CU_findex,CU_name,exploitation rate 2011-2014,SA,n.indicator,n.nonindicator,total,ppn indicator,indicator streams surveyed in 2014,current ppn monitored,decrease in indicator streams since 2006,current spawner abundance,status.SR,status.historic,,,SR,historic
-CM-16,Bella Coola-Dean Rivers,0.3,8,8,15,23,0.347826087,8,1,0%,185854,green ,yellow,,red,14%,29%
-CM-17,Bella Coola River-Late,DD,8,6,2,8,0.75,5,0.833333333,17,DD,DD,DD,,amber,29%,71%
-CM-20,Douglas-Gardner,0.03,6,27,35,62,0.435483871,23,0.851851852,15,131956,yellow,yellow,,green,57%,0%
-CM-18,Hecate Lowlands,0.17,"3,4,5,6,7",41,100,141,0.290780142,23,0.56097561,32,83633,green,red,,,1,1
-CM-19,Mussel-Kynock,0.2,"6,7",12,2,14,0.857142857,7,0.583333333,22%,127181,green,yellow,,,,
-CM-13,Rivers Inlet,0,9,5,10,15,0.333333333,2,0.4,50,9874,red,yellow,,,,
-CM-12,Smith Inlet,0,"9,10",5,6,11,0.454545455,3,0.6,50,23122,yellow,red,,,0.285714286,
-CM-15,Spiller-Fitz-Hugh-Burke,0.26,"7,8,9",28,41,69,0.405797101,15,0.535714286,32%,285700,green ,yellow,,,,
-CM-14,Wannock,DD,,0,1,1,0,0,,0,DD,DD,DD,,,,
-,AVERAGE,0.1,,14.7,23.6,,,9.6,0.653061224,18.3,121045.7,,,,,,
-,,,,0,1,1,,,0.668696626,,,,,,,,
-,,,,41,100,141,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,
-,,,,5,,8,0.290780142,,,,,,,,,,
-,,,,41,,141,0.857142857,,,,,,,,,,
+﻿CU_findex,CU_name,exploitation rate 2011-2014,SA,n.indicator,n.nonindicator,total,ppn indicator,indicator streams surveyed in 2014,current ppn monitored,decrease in indicator streams since 2006,current spawner abundance,status.SR,SR.new,status.historic,HS.new,,SR,historic
+CM-16,Bella Coola-Dean Rivers,0.3,8,8,15,23,0.347826087,8,1,0%,185854,green ,green,amber,amber,red,14%,29%
+CM-17,Bella Coola River-Late,DD,8,6,2,8,0.75,5,0.833333333,17,DD,DD,DD,DD,DD,amber,29%,71%
+CM-20,Douglas-Gardner,0.03,6,27,35,62,0.435483871,23,0.851851852,15,131956,amber,amber,amber,amber,green,57%,0%
+CM-18,Hecate Lowlands,0.17,"3,4,5,6,7",41,100,141,0.290780142,23,0.56097561,32,83633,green,amber,red,red,,1,1
+CM-19,Mussel-Kynock,0.2,"6,7",12,2,14,0.857142857,7,0.583333333,22%,127181,green,amber,amber,red,,,
+CM-13,Rivers Inlet,0,9,5,10,15,0.333333333,2,0.4,50,9874,red,red,amber,red,,,
+CM-12,Smith Inlet,0,"9,10",5,6,11,0.454545455,3,0.6,50,23122,amber,red,red,red,,0.285714286,
+CM-15,Spiller-Fitz-Hugh-Burke,0.26,"7,8,9",28,41,69,0.405797101,15,0.535714286,32%,285700,green ,green,amber,amber,,,
+CM-14,Wannock,DD,,0,1,1,0,0,,0,DD,DD,DD,DD,DD,,,
+,AVERAGE,0.1,,14.7,23.6,,,9.6,0.653061224,18.3,121045.7,,,,,,,
+,,,,0,1,1,,,0.668696626,,,,,,,,,
+,,,,41,100,141,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,
+,,,,5,,8,0.290780142,,,,,,,,,,,
+,,,,41,,141,0.857142857,,,,,,,,,,,
