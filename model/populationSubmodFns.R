@@ -44,12 +44,12 @@
 #'
 #' @export
 
-rickerModel <- function(S, a, b, error, tau = 0, phi_last = 0, recCap = NULL, extinctThresh = 0) {
+rickerModel <- function(S, a, b, sigma_u, error, tau = 0, phi_last = 0, recCap = NULL, extinctThresh = 0) {
 	
 	
 	# err <- utminus1 * tau + error
 	# phi <- tau * phi_last + error # WRONG! As pointed out by Reviewer #2, this needs to be corrected to account for effect of autocorrelation on the variance
-	phi <- tau * phi_last + error
+	phi <- tau * phi_last + sigma_u * sqrt(1 - tau^2) * error
 	
 	# if (a >= 0) {
 	# 	if (b != 0 & S > 0) {
