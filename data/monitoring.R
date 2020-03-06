@@ -37,36 +37,36 @@ fit <- lm((datMon$ppn_total[period2] - preDecl[3]) ~ 0 + c(1:length(period2)))
 # Plotting
 #------------------------------------------------------------------------------
 
-# par(mfrow=c(1,2), mar=c(3,4,2,1))
-# # Reproduce plots from English (2016)
-# plot(datMon$year, datMon$num_total, "l", las=1, bty="l", xlab="", ylab="Number", ylim=c(0, 1800))
-# # lines(datMon$year, tot, lty=3)
-# # lines(datMon$year, totIndicator, lty=3, col=indCol['ind'])
-# # abline(h = seq(200, 1800, 200), col="#00000030")
-# abline(v = 1986, lty=2)
-# lines(datMon$year, datMon$num_indicator, col=indCol['ind'])
-# legend("topleft", col=c(1, indCol['ind']), c("Total", "Indicator"), bty="n", lwd=1)
-# mtext(side=3, adj = 0, "a) Number of stream-species monitored", line=1)
+par(mfrow=c(1,2), mar=c(3,4,2,1))
+# Reproduce plots from English (2016)
+plot(datMon$year, datMon$num_total, "l", las=1, bty="l", xlab="", ylab="Number", ylim=c(0, 1800))
+# lines(datMon$year, tot, lty=3)
+# lines(datMon$year, totIndicator, lty=3, col=indCol['ind'])
+# abline(h = seq(200, 1800, 200), col="#00000030")
+abline(v = 1986, lty=2)
+lines(datMon$year, datMon$num_indicator, col=indCol['ind'])
+legend("topleft", col=c(1, indCol['ind']), c("Total", "Indicator"), bty="n", lwd=1)
+mtext(side=3, adj = 0, "a) Number of stream-species monitored", line=1)
 
 
-# plot(datMon$year, datMon$ppn_indicator, "l", col=paste(indCol['ind'], 50, sep=""), las=1, bty="l", xlab="", ylab="Proportion", ylim=c(0, 1))
-# # abline(h = seq(0, 1, 0.1), col="#00000030")
-# lines(datMon$year, datMon$ppn_nonindicator, col=paste(indCol['nonInd'], 50, sep=""))
-# abline(v = 1986, lty=2)
-# legend("bottomleft", col=indCol, lwd=c(1, 1), c("Indicator", "Non-indicator"), bty="n")
-# mtext(side=3, adj = 0, "b) Proportion of stream-species monitored", line=1)
-# 
+plot(datMon$year, datMon$ppn_indicator, "l", col=paste(indCol['ind'], 50, sep=""), las=1, bty="l", xlab="", ylab="Proportion", ylim=c(0, 1))
+# abline(h = seq(0, 1, 0.1), col="#00000030")
+lines(datMon$year, datMon$ppn_nonindicator, col=paste(indCol['nonInd'], 50, sep=""))
+abline(v = 1986, lty=2)
+legend("bottomleft", col=indCol, lwd=c(1, 1), c("Indicator", "Non-indicator"), bty="n")
+mtext(side=3, adj = 0, "b) Proportion of stream-species monitored", line=1)
+#
 # # Decline lines
-# lines(datMon$year[period1], rep(preDecl[1], length(period1)), col=indCol['ind'], lty=2)
-# lines(datMon$year[period2], preDecl[1] + predict(fitInd), col=indCol['ind'], lty=2)
-# 
-# lines(datMon$year[period1], rep(preDecl[2], length(period1)), col=indCol['nonInd'], lty=2)
-# lines(datMon$year[period2], preDecl[2] + predict(fitNonInd), col=indCol['nonInd'], lty=2)
-# 
+lines(datMon$year[period1], rep(preDecl[1], length(period1)), col=indCol['ind'], lty=2)
+lines(datMon$year[period2], preDecl[1] + predict(fitInd), col=indCol['ind'], lty=2)
+
+lines(datMon$year[period1], rep(preDecl[2], length(period1)), col=indCol['nonInd'], lty=2)
+lines(datMon$year[period2], preDecl[2] + predict(fitNonInd), col=indCol['nonInd'], lty=2)
+#
 # # What is the total ppn change in indicator and non-indicator?
-# tail(predict(fitInd), 1)
-# tail(predict(fitNonInd), 1)
-# tail(predict(fit), 1)
+tail(predict(fitInd), 1)
+tail(predict(fitNonInd), 1)
+tail(predict(fit), 1)
 
 ###############################################################################
 # 2) What was the decline in monitoring in the last 5 years of data?
@@ -153,3 +153,59 @@ lines(year[c(period1.c, period2.c)], c(rep(preDecl.c[3], length(period1.c)), pre
 # tail(predict(fit), 1)
 
 # Declines in chum salmon monitoring have actually been more extreme than overall...
+
+
+#------------------------------------------------------------------------------
+# Plot example of each scenario
+#------------------------------------------------------------------------------
+indCol <- c(ind = "#000000", nonInd = "#9C9C9C")
+indCol2 <- c(ind = "#000000", nonInd = "#9C9C9C")
+
+quartz(width = 6.5, height= 4.5, pointsize = 10)
+par(mfrow=c(2,2), mar=c(3,4,2,1), oma=c(0,0,1,0))
+
+# a) constant
+plot(datMon$year, datMon$ppn_indicator, "n", las=1, bty="l", xlab="", ylab="Proportion monitored", ylim=c(0, 1))
+
+points(datMon$year, datMon$ppn_indicator, col=indCol2['ind'], pch=19, cex=0.8)
+points(datMon$year, datMon$ppn_nonindicator, col=indCol2['nonInd'])
+lines(datMon$year[c(period1, period2)], rep(preDecl[1], length(c(period1, period2))), col=indCol['ind'], lty=2)
+lines(datMon$year[c(period1, period2)], rep(preDecl[2], length(c(period1, period2))), col=indCol['nonInd'], lty=2)
+
+legend("bottomleft", col=indCol, pch = c(19, 1), c("Indicator", "Non-indicator"), pt.cex=c(0.8, 1),, bty="n")# bg="white")
+mtext(side=3, adj = 0, "a) Constant", line=1)
+
+# b) observed declines
+plot(datMon$year, datMon$ppn_indicator, "n", las=1, bty="l", xlab="", ylab="Proportion monitored", ylim=c(0, 1))
+abline(v = 1986+0.5)
+points(datMon$year, datMon$ppn_indicator, col=indCol2['ind'], pch=19, cex=0.8)
+points(datMon$year, datMon$ppn_nonindicator, col=indCol2['nonInd'])
+lines(datMon$year[c(period1, period2)], c(rep(preDecl[1], length(period1)), preDecl[1] + predict(fitInd)), col=indCol['ind'], lty=2)
+lines(datMon$year[c(period1, period2)], c(rep(preDecl[2], length(period1)), preDecl[2] + predict(fitNonInd)), col=indCol['nonInd'], lty=2)
+
+mtext(side=3, adj = 0, "b) Observed declines", line=1)
+legend("bottomleft", col=indCol, pch = c(19, 1), c("Indicator", "Non-indicator"), pt.cex=c(0.8, 1),, bty="n")# bg="white")
+
+# c) chum declines
+plot(year, ppnMonitored[,1], "n", las=1, bty="l", xlab="", ylab="Proportion monitored", ylim=c(0, 1))
+abline(v = 1986.5)
+points(year, ppnMonitored[,2],  col=indCol2['ind'], cex=0.8, pch=15)
+points(year, ppnMonitored[,3],  col=indCol2['nonInd'], pch=0)
+lines(year[c(period1.c, period2.c)], c(rep(preDecl.c[2], length(period1.c)), preDecl.c[2] + predict(fitInd.c)), col=indCol['ind'], lty=2)
+lines(year[c(period1.c, period2.c)], c(rep(preDecl.c[3], length(period1.c)), preDecl.c[3] + predict(fitNonInd.c)), col=indCol['nonInd'], lty=2)
+
+legend("bottomleft", col=indCol, pch = c(15, 0), c("Indicator", "Non-indicator"), pt.cex=c(0.8, 1),bty="n")# bg="white")
+
+mtext(side=3, adj = 0, "b) Observed declines of chum streams only", line=1)
+
+
+# d) recentd declines
+plot(datMon$year, datMon$ppn_indicator, "n", las=1, bty="l", xlab="", ylab="Proportion monitored", ylim=c(0, 1))
+abline(v = 1986+0.5)
+points(datMon$year, datMon$ppn_indicator, col=indCol2['ind'], pch=19, cex=0.8)
+points(datMon$year, datMon$ppn_nonindicator, col=indCol2['nonInd'])
+lines(datMon$year[c(period1.b, period2.b)], c(rep(preDecl.b[1], length(period1.b)), preDecl.b[1] + predict(fitInd.b)), col=indCol['ind'], lty=2)
+lines(datMon$year[c(period1, period2)], c(rep(preDecl[2], length(period1)), preDecl[2] + predict(fitNonInd)), col=indCol['nonInd'], lty=2)
+legend("bottomleft", col=indCol, pch = c(19, 1), c("Indicator", "Non-indicator"), pt.cex=c(0.8, 1),, bty="n")# bg="white")
+
+mtext(side=3, adj = 0, "d) Recent decline for indicator streams", line=1)
