@@ -2,9 +2,9 @@
 #'
 #' This function calculates recruitment from Ricker curve with AR(1) process
 #' (according to Peterman et al. 2003; modified to take more recent parameter-
-#' ization). Uses parameters from arima.mle (a, -b, sig, rho in log space) with
+#' ization). Uses parameters from arima.mle (a, -b, sig, tau in log space) with
 #' multivariate normally distributed errors. Note that by default
-#' utminus1 and rho are zero, resulting in a standard Ricker model.
+#' utminus1 and tau are zero, resulting in a standard Ricker model.
 #'
 #' @param S A numeric vector of spawner abundances.
 #' @param a A numeric vector of alpha values, i.e. productivity at low spawner
@@ -13,7 +13,7 @@
 #' meter.
 #' @param error A numeric vector of recruitment errors (upsilon), typically generated
 #' using \code{rmvnorm()} and relevant process variance estimates (sigma).
-#' @param rho A numeric vector of rho values, i.e. AR1 coefficient.
+#' @param tau A numeric vector of temporal autocorrelation values, i.e. AR1 coefficient.
 #' outside of model using multivariate normal (or equivalent) distribution.
 #' @param phi_last A numeric vector representing recruitment deviations (phi) from
 #' previous brood year (t-1).
@@ -31,7 +31,7 @@
 #' rickerModel(S = 1.1, a = 1.8, b = 1.2, error = 0.3)
 #'
 #' #with autoregressive error
-#' rickerModel(S = 1.1, a = 1.8, b = 1.2, error = 0.3, rho = 0.2,
+#' rickerModel(S = 1.1, a = 1.8, b = 1.2, error = 0.3, tau = 0.2,
 #' phi_last = 0.7)
 #' 
 #' # For 10 subpopulations
@@ -39,16 +39,17 @@
 #' Sigma <- matrix(rep(0.01, nPop^2), nPop, nPop)
 #' diag(Sigma) <- 0.1
 #' rickerModel(S = runif(nPop, 0.8, 1.5), a = rnorm(nPop, 1, 1), 
-#' b = rep(1, nPop), error = rmvnorm(1, rep(0, nPop), Sigma), rho = 0.2,
+#' b = rep(1, nPop), error = rmvnorm(1, rep(0, nPop), Sigma), tau = 0.2,
 #' phi_last = rmvnorm(1, rep(0, nPop), Sigma))
 #'
 #' @export
 
-rickerModel <- function(S, a, b, error, rho = 0, phi_last = 0, recCap = NULL, extinctThresh = 0) {
+rickerModel <- function(S, a, b, error, tau = 0, phi_last = 0, recCap = NULL, extinctThresh = 0) {
 	
 	
-	# err <- utminus1 * rho + error
-	phi <- rho * phi_last + error
+	# err <- utminus1 * tau + error
+	# phi <- tau * phi_last + error # WRONG! As pointed out by Reviewer #2, this needs to be corrected to account for effect of autocorrelation on the variance
+	phi <- tau * phi_last + error
 	
 	# if (a >= 0) {
 	# 	if (b != 0 & S > 0) {

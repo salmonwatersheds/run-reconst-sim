@@ -30,10 +30,10 @@
 #'   a_mean: average productivity parameter (a) among sub-populations within CU
 #'   sigma_a: standard deviation in a among sub-populations within CU
 #'   b: density dependence parameter (same for all subpopulations)
-#'   rho: temporal autocorrelation in Ricker residuals (numeric 0-1)
+#'   tau: temporal autocorrelation in Ricker residuals (numeric 0-1)
 #'   sigma_u: standard deviation in residuals (same for all subpopulations;
 #'   sigma_upsilon)
-#'   correlPop: spatial autocorrelation among subpopulations (covariance; 0-1)
+#'   correlPop: spatial autocorrelation among subpopulations (covariance)
 #'   corrMat: is a custom correlation matrix for recruitment deviations (Sigma)
 #'   provided? If FALSE, then corrMat calculated from sigma_u and correlPop
 #'   recCap: recruitment cap
@@ -208,7 +208,8 @@ reconstrSim <- function(simPar, seed = NULL) {
 	#-----------------------------------------------------------------------------
 	
 	# Set up matrices to store output
-	phi <- matrix(NA, nrow = nYears + 1, ncol = nPop) # recruitment deviations
+	phi <- matrix(NA, nrow = nYears + 1, ncol = nPop) # autocorrelated recruitment deviations
+	nu <- rmvnorm(nYears, rep(0, nPop), sigma = covMat) # annual deviation (uncorrelated)
 	recruitsBY <- matrix(NA, nrow = nYears, ncol = nPop) # recruits by brood year
 	recruitsRY <- matrix(NA, nrow = nYears, ncol = nPop) # recruits by return year
 	spawners <- matrix(NA, nrow = nYears, ncol = nPop) # spawners in each year
@@ -233,8 +234,8 @@ reconstrSim <- function(simPar, seed = NULL) {
 		dum <- rickerModel(S = spawners[y, ],
 											 a = a, # constant productivity
 											 b = b[y, ], # time-varying capacity
-											 error = rmvnorm(1, rep(0, nPop), sigma = covMat), #-simPar$sigma_u^2 / 2 # No lognormal bias correction
-											 rho = simPar$rho,
+											 error = nu[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
+											 tau = simPar$tau,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
 											 extinctThresh = 0)#simPar$extinctThresh)
@@ -268,8 +269,8 @@ reconstrSim <- function(simPar, seed = NULL) {
 		dum <- rickerModel(S = spawners[y, ], 
 											 a = a, 
 											 b = b[y, ], 
-											 error = rmvnorm(1, rep(0, nPop), sigma = covMat), #-simPar$sigma_u^2 / 2 # No lognormal bias correction
-											 rho = simPar$rho,
+											 error = nu[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
+											 tau = simPar$tau,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
 											 extinctThresh = 0)#simPar$extinctThresh)
