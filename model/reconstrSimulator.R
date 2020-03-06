@@ -209,7 +209,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 	
 	# Set up matrices to store output
 	phi <- matrix(NA, nrow = nYears + 1, ncol = nPop) # autocorrelated recruitment deviations
-	nu <- rmvnorm(nYears, rep(0, nPop), sigma = covMat) # annual deviation (uncorrelated)
+	upsilon <- rmvnorm(nYears, rep(0, nPop), sigma = covMat) # annual deviation (uncorrelated)
 	recruitsBY <- matrix(NA, nrow = nYears, ncol = nPop) # recruits by brood year
 	recruitsRY <- matrix(NA, nrow = nYears, ncol = nPop) # recruits by return year
 	spawners <- matrix(NA, nrow = nYears, ncol = nPop) # spawners in each year
@@ -234,7 +234,8 @@ reconstrSim <- function(simPar, seed = NULL) {
 		dum <- rickerModel(S = spawners[y, ],
 											 a = a, # constant productivity
 											 b = b[y, ], # time-varying capacity
-											 error = nu[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
+											 sigma_u = simPar$sigma_u,
+											 error = upsilon[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
 											 tau = simPar$tau,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
@@ -269,7 +270,8 @@ reconstrSim <- function(simPar, seed = NULL) {
 		dum <- rickerModel(S = spawners[y, ], 
 											 a = a, 
 											 b = b[y, ], 
-											 error = nu[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
+											 sigma_u = simPar$sigma_u,
+											 error = upsilon[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
 											 tau = simPar$tau,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
