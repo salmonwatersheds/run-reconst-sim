@@ -16,12 +16,11 @@ source("model/expansionFactors.R")
 source("model/benchmarkFns.R")
 source("model/performanceFns.R")
 source("model/reconstrSimulator.R")
-source("model/runSensitivity.R")
-source("model/plottingFns.R")
+source("runSims/runSensitivity.R")
 
 # Load base parameter values
 simPar <- read.csv(here("data/baseSimPar.csv"), stringsAsFactors = F)
-simPar <- simPar[simPar$scenario == "base",]
+simPar <- simPar[simPar$scenario == "baseGreen",]
 
 # Run three different "chains" of 1000 MCMC iterations to see how they converge
 nChains <- 6
@@ -47,10 +46,10 @@ ptime <- system.time({
 			out <- reconstrSim(simPar)
 			
 			# Only using full observation model
-			perf[[1]][i] <- out$performance[[1]]$currentMPE
+			perf[[1]][i] <- out$performance$currentMPE
 			for(b in 2:3){ # SR benchmarks (b = 2), or HS benchmarks (b = 3)
-				perf[[b]][i, 1:2] <- out$performance[[1]]$benchMPE[b-1, ]
-				perf[[b]][i, 3] <- out$performance[[1]]$statusDiff[b-1]
+				perf[[b]][i, 1:2] <- out$performance$benchMPE[b-1, ]
+				perf[[b]][i, 3] <- out$performance$statusDiff[b-1]
 			}
 			
 			# If using "all three" types of observed data
@@ -128,7 +127,9 @@ for (i in 1:nSim) {
 # If we want to keep this percent error below 3%, how many simulations do we need?
 nSimEnough <- numeric(7)
 for(j in 1:7){
-	nSimEnough[j] <- which(cumsumNA(percError[, j] > 0.03) == max(cumsumNA(percError[, j] > 0.03), na.rm=TRUE))[1]
+	# nSimEnough[j] <- which(cumsumNA(percError[, j] > 0.03) == max(cumsumNA(percError[, j] > 0.03), na.rm=TRUE))[1]
+	nSimEnough[j] <- min(which(percError[, j] < 0.03))[1]
+	
 }
 
 plot(1:nSim, percError[,1], "n", ylim=c(0, 0.2), ylab = "Max. % difference among 6 runs", las=1, bty="l", xlab="Number of simulations", yaxs="i")
@@ -138,7 +139,7 @@ abline(h = c(0.03), lty=3)
 arrows(x0=nSimEnough, x1 = nSimEnough, y0 = -0.01, y1 = 0, length=0.08, col=c(1:7), xpd=NA)
 max(nSimEnough)
 
-legend("topright", title="Performance measure", col=1:7, lwd=1, c("MPE in AvgS", "MPE in lower SR", "MPE in upper SR", "MPE in lower HS", "MPE in upper HS", "Ppn. wrong by SR", "Ppn. wrong by HS"))
+legend("topright", title="Performance measure", col=1:7, lwd=1, c("MPE in AvgS", "MPE in lower SR", "MPE in upper SR", "MPE in lower HS", "MPE in upper HS", "Ppn. wrong by SR", "Ppn. wrong by HS"), bty="n")
 
 # Plot MPE
 par(mfcol=c(2,2), mar=c(3,5,2,2), oma=c(2,2,2,0), mgp=c(3,1,0))
