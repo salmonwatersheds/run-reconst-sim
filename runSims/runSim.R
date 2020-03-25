@@ -69,26 +69,24 @@ for(baseCaseNum in 1:3){
 	if(baseCaseNum == 2) saveRDS(object = out_base100Mon2, file="workspaces/base100Mon_delisted_baseAmber.rds")
 	if(baseCaseNum == 3) saveRDS(object = out_base100Mon2, file="workspaces/base100Mon_delisted_baseRed.rds")
 
-}
-
 	###############################################################################
 	# Real monitoring scenarios x decline in capacity ** Fig 3 **
 	###############################################################################
-	# Monitoring coverage scenarios:
-	# 1) No decline - keep at ppnSampled_ind = 0.762 and ppnSampled_nonInd = 0.719
-	# 2) Observed decline since mid 1980s across all systems - ppnChange_ind = -0.047 and ppnChange_nonInd = -0.667
-	# 3) Observed decline since mid 1980s over for chum
-	# 4) Observed decline since 2014 across all systems
-
 	for(baseCaseNum in 1:3){
 		
 		if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
 		if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
 		if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
-		simPar$correlPop <- 0.9
 		
-		simPar_mon <- list(); length(simPar_mon) <- 4
+		# Monitoring coverage scenarios:
+	# 1) No decline - keep at ppnSampled_ind = 0.762 and ppnSampled_nonInd = 0.719
+	# 2) Observed decline since mid 1980s across all systems - ppnChange_ind = -0.047 and ppnChange_nonInd = -0.667
+	# 3) Observed decline since mid 1980s over for chum
+	# 4) Observed decline since 2014 across all systems
+	r <- 2
+	simPar$correlPop <- c(0, 0.46, 0.9)[r]
 	
+	simPar_mon <- list(); length(simPar_mon) <- 4
 	
 	# 1) No decline
 	simPar_mon[[1]] <- simPar
@@ -136,11 +134,13 @@ for(baseCaseNum in 1:3){
 
 	out_capacityXmon2 <- delistSensitivity(out_capacityXmon[[1]])
 
-	if(baseCaseNum == 1) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseGreen_correlPop09.rds")
-	if(baseCaseNum == 2) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseAmber_correlPop09.rds")
-	if(baseCaseNum == 3) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseRed_correlPop09.rds")
-}
-
+	if(baseCaseNum == 1) saveRDS(object = out_capacityXmon2, file=paste("workspaces/capacityXmon_delisted_baseGreen", c("_correlPop0", "", "_correlPop9")[r], ".rds", sep=""))
+	if(baseCaseNum == 2) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseAmber.rds")
+	if(baseCaseNum == 3) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseRed.rds")
+	
+	
+	simPar$correlPop <- 0.46
+	
 	###############################################################################
 	# Number of indicator & non-indicator streams
 	###############################################################################
@@ -177,7 +177,7 @@ for(baseCaseNum in 1:3){
 	# Over increasing bias in observation
 	###############################################################################
 	
-		obsBias <- seq(-1.6, 0, 0.2)
+	obsBias <- seq(-1.6, 0, 0.2)
 	simPar_obsBias <- makeParList(basePar = simPar, sensName = "obs_bias", sensValues = obsBias)
 	
 	out_obsBias <- runSensitivity(parList = simPar_obsBias, nSim = 4000, nCores = 10)
@@ -209,7 +209,7 @@ for(baseCaseNum in 1:3){
 	# Changes in observation bias part-way through time series 
 	###############################################################################
 	
-		obs_bias2 <- c(-1.6, -0.7, -0.4,  0)
+	obs_bias2 <- c(-1.6, -0.7, -0.4,  0)
 
 	simPar_obsBiasChange <- makeParList(basePar = simPar, sensName = "obs_bias2", sensValues = obs_bias2)
 
@@ -225,11 +225,11 @@ for(baseCaseNum in 1:3){
 	###############################################################################
 	# Over increasing interannual variability in age-at-maturity
 	###############################################################################		
-for(baseCaseNum in 1:3){
-		
-		if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
-		if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
-		if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
+# for(baseCaseNum in 1:3){
+		# 
+	# if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
+	# if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
+	# if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
 		
 	ageErr <- seq(0.2, 1.6, 0.2)
 	
@@ -244,29 +244,73 @@ for(baseCaseNum in 1:3){
 	if(baseCaseNum == 2) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseAmber.rds")
 	if(baseCaseNum == 3) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseRed.rds")
 	
-} # end loop over baseCaseNum 1-3
+# } # end loop over baseCaseNum 1-3
 	
 	
 	###############################################################################
 	# Over decreasing correlation in recruitment deviates
 	###############################################################################
-	for(baseCaseNum in 2:3){
+	# for(baseCaseNum in 2:3){
+# 
+# 	if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
+# 	if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
+# 	if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
 
-		if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
-		if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
-		if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
+	correlPop <- seq(0, 0.9, 0.1)
 
-		correlPop <- seq(0, 0.9, 0.1)
+	simPar_correlPop <- makeParList(basePar = simPar, sensName = "correlPop", sensValues = correlPop)
 
-		simPar_correlPop <- makeParList(basePar = simPar, sensName = "correlPop", sensValues = correlPop)
+	out_correlPop <- runSensitivity(parList = simPar_correlPop, nSim = 4000, nCores = 8)
 
-		out_correlPop <- runSensitivity(parList = simPar_correlPop, nSim = 4000, nCores = 8)
+	print(paste("time for correlPop = ", out_correlPop[[2]]))
+	out_correlPop2 <- delistSensitivity(out_correlPop[[1]])
 
-		print(paste("time for correlPop = ", out_correlPop[[2]]))
-		out_correlPop2 <- delistSensitivity(out_correlPop[[1]])
+	if(baseCaseNum == 1) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseGreen.rds")
+	if(baseCaseNum == 2) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseAmber.rds")
+	if(baseCaseNum == 3) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseRed.rds")
+		
+		
+	###############################################################################
+	# Over increasing variability in recruitment deviates
+	###############################################################################
+	sigma_u <- seq(0.5, 1.5, 0.1)
+	
+	X <- matrix(rep(NA), length(sigma_u)*2*3)
+	dim(X) <- c(length(sigma_u), 2, 3)
+	trueStatus_sigma_u <- list(
+		baseGreen = X,
+		baseAmber = X, 
+		baseRed = X
+	)
+	
+		for(baseCaseNum in 1:3){
+	if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
+	if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
+	if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
 
-		if(baseCaseNum == 1) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseGreen.rds")
-		if(baseCaseNum == 2) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseAmber.rds")
-		if(baseCaseNum == 3) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseRed.rds")
+	
+	simPar_sigma_u <- makeParList(basePar = simPar, sensName = "sigma_u", sensValues = sigma_u)
 
-	} # end loop over baseCaseNum 1-3
+	out_sigma_u <- runSensitivity(parList = simPar_sigma_u, nSim = 4000, nCores = 11)
+	
+	for(i in 1:length(sigma_u)){
+		for(j in 1:2){ # for SR and HS
+			trueStatus_sigma_u[[baseCaseNum]][i, j, 1] <- sum(is.element(out_sigma_u[[1]][[i]][[j + 1]][, 3], c(1,7,5))) / nSim
+			trueStatus_sigma_u[[baseCaseNum]][i, j, 2] <- sum(is.element(out_sigma_u[[1]][[i]][[j + 1]][, 3], c(9,2,4))) / nSim
+			trueStatus_sigma_u[[baseCaseNum]][i, j, 3] <- sum(is.element(out_sigma_u[[1]][[i]][[j + 1]][, 3], c(8,6,3))) / nSim
+		}}
+	# Save the true status for all simulations
+
+	print(paste("time for sigma_u = ", out_sigma_u[[2]]))
+	
+	out_sigma_u <- delistSensitivity(out_sigma_u[[1]])
+
+	if(baseCaseNum == 1) saveRDS(object = out_sigma_u, file="workspaces/sigma_u_delisted_baseGreen.rds")
+	if(baseCaseNum == 2) saveRDS(object = out_sigma_u, file="workspaces/sigma_u_delisted_baseAmber.rds")
+	if(baseCaseNum == 3) saveRDS(object = out_sigma_u, file="workspaces/sigma_u_delisted_baseRed.rds")
+
+
+} # end loop over baseCaseNum 1-3
+	
+	saveRDS(object = trueStatus_sigma_u, file="workspaces/sigma_u_trueStatus.rds")
+	
