@@ -30,8 +30,8 @@ simPar_base <- list(simPar_all[simPar_all$scenario == "baseGreen",], simPar_all[
 set.seed(8293) #original seed
 # set.seed(9823)
 out_base <- runSensitivity(parList = simPar_base, nSim = 4000, nCores = 3)[[1]]
-
-
+# saveRDS(object = out_base, file = "workspaces/out_base.rds")
+# readRDS(file = "workspaces/out_base.rds")
 # Figure 6: cases2plot <- c(1, 3)
 # Figure S7: cases2plot <- c(2)
 
@@ -111,10 +111,10 @@ for(k in 1:2){
 	text(bp, TR, pos=3, paste(formatC(round(TR*100, 1), 1, format="f"), "%"), xpd=NA)
 	
 	if(length(cases2plot) == 1){
-		mtext(side = 3, adj = 0, line=2, c("a) Stock-recruitment", "b) Historical spawners")[k], cex=0.8)
+		mtext(side = 3, adj = 0, line=2, c("a) Spawner-recruitment", "b) Percentile")[k], cex=0.8)
 	} else {
 		mtext(side = 3, adj = 0, line=2, paste(letters[lc], ")", sep=""), cex=0.8)
-		if(i==1) mtext(side=3, line=3.5, c("Stock-recruitment", "Historical spawners")[k], cex=0.8, font = 2)
+		if(i==1) mtext(side=3, line=3.5, c("Spawner-recruitment", "Percentile")[k], cex=0.8, font = 2)
 	}
 	
 	par(mar=c(5,0,0,4))
@@ -126,6 +126,7 @@ for(k in 1:2){
 	
 } # end i
 
+ dev.off()
 #------------------------------------------------------------------------------
 # Why misclassifications? RB in benchmarks
 #------------------------------------------------------------------------------
@@ -180,10 +181,10 @@ mtext(side=2, line=4, "Relative bias")
 
 legend("topright", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), bty="n", pt.cex = ptCex, pt.bg = c(statusCols['r'], 1, statusCols['g']))
 
-mtext(side=3, line=0.5, adj=0, "a) Stock-recruitment")
+mtext(side=3, line=0.5, adj=0, "a) Spawner-recruitment")
 mtext(side=1, "Case", line=3.5)
 
-# Historical spawners
+# Percentile
 
 yAll <- c(delistedOut$RB$S25[cases2plot, '25th'], delistedOut$RB$S25[cases2plot, '75th'], delistedOut$RB$S55[cases2plot, '25th'], delistedOut$RB$S50[cases2plot, '75th'], delistedOut$RB$avgS[cases2plot, '25th'], delistedOut$RB$avgS[cases2plot, '75th'])
 
@@ -210,7 +211,7 @@ plotCI(x, delistedOut$RB$avgS[cases2plot, 'median'], li = delistedOut$RB$avgS[ca
 A <- axis(side=2, labels = FALSE)
 axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
 
-mtext(side=3, line=0.5, adj=0, "b) Historical spawners")
+mtext(side=3, line=0.5, adj=0, "b) Percentile")
 mtext(side=1, "Case", line=3.5)
 
 legend("topright", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), bty="n", pt.cex = ptCex, pt.bg = c(statusCols['r'], 1, statusCols['g']))
@@ -227,7 +228,7 @@ delistedOut.all[[2]] <- readRDS("workspaces/base100Mon_delisted_baseAmber.rds")
 delistedOut.all[[3]] <- readRDS("workspaces/base100Mon_delisted_baseRed.rds")
 
 # pdf(file = "FigS9.pdf", width = 6, height= 6.5, pointsize = 10)
-quartz(width = 6, height= 6.5, pointsize = 10)
+# quartz(width = 6, height= 6.5, pointsize = 10)
 # layout(matrix(c(1,2,3,3), nrow=2, byrow=2))
 par(mfrow=c(3,2), mar=c(3, 4, 1, 1), oma=c(0,6,5,1))
 
@@ -238,7 +239,7 @@ ptCex <- 1
 for(i in 1:3){
 	delistedOut <- delistedOut.all[[i]]
 	
-	# Stock-recruitment
+	# Spawner-recruitment
 	yAll <- c(delistedOut$RB$Sgen1[, '25th'], delistedOut$RB$Sgen1[, '75th'], delistedOut$RB$Smsy[, '25th'], delistedOut$RB$Smsy[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th'])
 
 
@@ -265,7 +266,7 @@ for(i in 1:3){
 	if(i==1) mtext(side=3, line=4, font = 2, "Spawner-recruitment")
 	mtext(side = 2, line = 6, c("High-productivity\nHCR", "Low-productivity\nModerate-harvest", "Low-productivity\nHigh-harvest")[i], font = 2)
 	
-	# Historical spawners
+	# Percentile
 	yAll <- c(delistedOut$RB$S25[, '25th'], delistedOut$RB$S25[, '75th'], delistedOut$RB$S50[, '25th'], delistedOut$RB$S50[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th'])
 	
 	plotCI(x - jit, delistedOut$RB$S25[, 'median'], "n", li = delistedOut$RB$S25[, '25th'], ui= delistedOut$RB$S25[, '75th'], yaxt="n", col=NA, ylab="", xlab="", xaxt="n", ylim=range(yAll), xlim=c(0.5, 4.5))
@@ -286,7 +287,7 @@ for(i in 1:3){
 	A <- axis(side=2, labels = FALSE)
 	axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
 	
-	if(i==1) mtext(side=3, line=4, font = 2, "Historical spawners")
+	if(i==1) mtext(side=3, line=4, font = 2, "Percentile")
 	
 	if(i==1) legend(4.1, u[4] + 0.22*(u[4]-u[3]), pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[S25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), pt.cex = 0.8, bg="white", xpd=NA)
 
@@ -300,12 +301,13 @@ for(i in 1:3){
 # 3) SmallHigh: 8 ind + 2 non-ind = 10
 # 4) LargeLow: 42 ind + 58 non-ind = 140
 # 5) LargeHigh: 119 ind + 21 non-ind = 140
-baseCaseNum <- 3
 
 sensitivityPar <- c(1:5)
 baseValue <- 1
 ptCex <- 1
 
+for(baseCaseNum in 1:3){
+	
 if(baseCaseNum == 1){
 	delistedOut <- readRDS("workspaces/nPop_delisted_baseGreen.rds")
 	pdf(file = "FigS10.pdf", width = 6, height= 4.5, pointsize = 10)
@@ -335,7 +337,7 @@ for(j in 1:2){
 	
 	if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
 	
-	mtext(side=3, line=2, c("Stock-recruitment", "Historical spawners")[j])
+	mtext(side=3, line=2, c("Spawner-recruitment", "Percentile")[j])
 	mtext(side=3, line=0.5, adj=0, c("a)", "b)")[j])
 }
 
@@ -378,7 +380,7 @@ segments(x0=x[1]-jit, x1=x[1]+jit, y0=y, y1=y, xpd=NA); text(x[1], y, pos=1, "De
 segments(x0=x[2] - jit, x1=x[3] + jit, y0=y, y1=y, xpd=NA); text(mean(x[2:3]), y, pos=1, "Small CUs", xpd=NA)
 segments(x0=x[4] - jit, x1=x[5] + jit, y0=y, y1=y, xpd=NA); text(mean(x[4:5]), y, pos=1, "Large CUs", xpd=NA)
 
-# Historical spawners
+# Percentile
 
 yAll <- c(delistedOut$RB$S25[, '25th'], delistedOut$RB$S25[, '75th'], delistedOut$RB$S50[, '25th'], delistedOut$RB$S50[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th'])
 
@@ -409,6 +411,8 @@ segments(x0=x[4] - jit, x1=x[5] + jit, y0=y, y1=y, xpd=NA); text(mean(x[4:5]), y
 mtext(side=1, outer=TRUE, "Scenario for number of indicator & non-indicator streams", line=1)
 
 dev.off()
+
+} # end all base cases
 ###############################################################################
 # Capacity X Real monitoring scenarios
 ###############################################################################
@@ -434,7 +438,7 @@ plot_capacityXmon <- function(){
 		axis(side=1, at=bp, labels=rep(redHab, length(scenarios)), tck=-0.02, las=lasLab, mgp=c(3, 0.5, -0.1))
 		
 		if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
-		mtext(side=3, line=3, c("Stock-recruitment", "Historical spawners")[j])
+		mtext(side=3, line=3, c("Spawner-recruitment", "Percentile")[j])
 		mtext(side=3, line=1.5, adj=0, c("a)", "b)")[j])
 	}
 	
@@ -471,7 +475,7 @@ plot_capacityXmon <- function(){
 	
 	# legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = ptCex, xpd=NA, ncol=3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
 	
-	# Historical spawners
+	# Percentile
 	
 	ylims <- range(c(delistedOut$RB$S25[includeIndices, '25th'], delistedOut$RB$S25[includeIndices, '75th'], delistedOut$RB$S50[includeIndices, '25th'], delistedOut$RB$S50[includeIndices, '75th'], delistedOut$RB$avgS[includeIndices, '25th'], delistedOut$RB$avgS[includeIndices, '75th']))
 	# ylims <- c(-0.2, 4.5)
@@ -599,7 +603,7 @@ plot_obsBias <- function(){
 		
 		points(predict(lm(bp ~ sensitivityPar), newdata = data.frame(sensitivityPar = baseValue)), 1.05, pch=8, xpd=NA)
 		if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
-		mtext(side=3, line=2, c("Stock-recruitment", "Historical spawners")[j])
+		mtext(side=3, line=2, c("Spawner-recruitment", "Percentile")[j])
 		mtext(side=3, line=0.5, adj=0, c("a)", "b)")[j])
 		}
 	
@@ -630,7 +634,7 @@ plot_obsBias <- function(){
 	mtext(side=3, line=0.5, adj=0, "c)")
 	legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), bty="n", pt.cex = ptCex, pt.bg = c(statusCols['r'], 1, statusCols['g']))
 	
-	# Historical spawners
+	# Percentile
 	
 	yAll <- range(c(delistedOut$RB$S25[, '75th'], delistedOut$RB$S25[, '25th'], delistedOut$RB$S50[, '25th'], delistedOut$RB$S50[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th']))
 	
@@ -687,7 +691,7 @@ for(baseCaseNum in 1:3){
 
 
 #------------------------------------------------------------------------------
-# Don't need to include historical spawners here because catch bias does not 
+# Don't need to include Percentile here because catch bias does not 
 # affect spawner estimates, only SR relationship.
 
 plot_catchBias <- function(){
@@ -704,7 +708,7 @@ plot_catchBias <- function(){
 		
 		points(bp[findInterval(baseValue, sensitivityPar)], 1.05, pch=8, xpd=NA)
 		if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
-		mtext(side=3, line=2, c("Stock-recruitment", "Historical spawners")[j])
+		mtext(side=3, line=2, c("Spawner-recruitment", "Percentile")[j])
 		mtext(side=3, line=0.5, adj=0, c("a)", "b)")[j])
 	# }
 		
@@ -743,7 +747,7 @@ plot_catchBias <- function(){
 	}
 	# legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), bty="n", pt.cex = 0.8)
 	
-	# # Historical spawners
+	# # Percentile
 	# ylims <- range(c(delistedOut$RB$S25[, '25th'], delistedOut$RB$S25[, '75th'], delistedOut$RB$S50[, '25th'], delistedOut$RB$S50[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th']))
 	# 
 	# plotCI(sensitivityPar - 0.01, delistedOut$RB$S25[, 'median'], "n", li = delistedOut$RB$S25[, '25th'], ui= delistedOut$RB$S25[, '75th'], yaxt="n", col=NA, ylab="", xlab="", ylim=ylims)
@@ -771,7 +775,7 @@ plot_catchBias <- function(){
 catchBias <- seq(-1, 1, 0.2)
 sensitivityPar <- catchBias
 baseValue <- 0
-quartz(width = 3.2, height= 4.5, pointsize = 10)
+# quartz(width = 3.2, height= 4.5, pointsize = 10)
 # layout(matrix(c(1,2,3,3), nrow=2, byrow=2))
 
 for(baseCaseNum in 1:3){
@@ -861,6 +865,7 @@ dev.off()
 ###############################################################################
 # Changes in observation bias part-way through time series 
 ###############################################################################
+obs_bias2 <- c(-1.6, -0.7, -0.4,  0)
 
 #------------------------------------------------------------------------------
 # Example of scenarios
@@ -899,7 +904,7 @@ for(j in 1:2){
 	axis(side=1, at=bp, labels=obs_bias2)
 	
 	if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
-	mtext(side=3, line=2, c("Stock-recruitment", "Historical spawners")[j])
+	mtext(side=3, line=2, c("Spawner-recruitment", "Percentile")[j])
 	mtext(side=3, line=1, adj=0, c("a)", "b)")[j])
 }
 #------------------------------------------------------------------------------
@@ -931,7 +936,7 @@ mtext(side=3, line=0.5, adj=0, "c)")
 # legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = 0.8, xpd=NA, ncol=3, bg="white")
 
 #--------------------------
-# Historical spawners
+# Percentile
 ylims <- range(c(delistedOut$RB$S25[, '25th'], delistedOut$RB$S25[, '75th'], delistedOut$RB$S50[, '25th'], delistedOut$RB$S50[, '75th'], delistedOut$RB$avgS[, '25th'], delistedOut$RB$avgS[, '75th']))
 
 plotCI(bp - jit, delistedOut$RB$S25[, 'median'], "n", li = delistedOut$RB$S25[, '25th'], ui= delistedOut$RB$S25[, '75th'], yaxt="n", col=NA, ylab="", xlab="", ylim =ylims, xaxt="n", xlim=c(0, 4.5))
@@ -1011,7 +1016,7 @@ mtext(side=3, line=0.5, adj=0, "b) Capacity")
 # Inter-annual variability in age-at-return
 ###############################################################################
 
-# Don't need to include historical spawners here because does not 
+# Don't need to include Percentile here because does not 
 # affect spawner estimates, only SR relationship.
 
 delistedOut.all <- list(); length(delistedOut.all) <- 3
@@ -1135,8 +1140,8 @@ for(j in 1:2){ # for SR and HS
 	if(j==1) mtext(side=3, line=0.5, adj=0, c("a)", "e)", "i)")[s], cex=0.8)
 	if(j==2) mtext(side=3, line=0.5, adj=0, c("b)", "f)", "j)")[s], cex=0.8)
 	
-	if(j==1 & s ==1) mtext(side = 3, line = 2, "Stock-recruitment", font = 2, cex = 0.8)
-	if(j==2 & s ==1) mtext(side = 3, line = 2, "Historical spawners", font = 2, cex = 0.8)
+	if(j==1 & s ==1) mtext(side = 3, line = 2, "Spawner-recruitment", font = 2, cex = 0.8)
+	if(j==2 & s ==1) mtext(side = 3, line = 2, "Percentile", font = 2, cex = 0.8)
 	
 	# mtext(side = 3, line = 1.5, c("High productivity\nHarvest Control Rule", "Low productivity\nModerate harvest", "Low productivity\nHigh harvest")[s], cex=0.8, font=2)
 	if(j == 2 & s == 1) text(14, -0.5, srt=-90,"High productivity\nHarvest Control Rule", font = 2, xpd= NA, cex = 1.2)
