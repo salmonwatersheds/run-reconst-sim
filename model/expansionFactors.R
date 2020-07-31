@@ -32,7 +32,8 @@ refDecade <- function(sampledSpawners, years = 1960:2009, legacy = FALSE){
 	rownames(decade.counts) <- unique(decades)
 	
 	for(i in 1:dim(sampledSpawners)[2]) { #for each stream
-		decade.counts[ ,i] <- tapply(sampledSpawners[,i] != 0, decades, sum)
+		# decade.counts[ ,i] <- tapply(sampledSpawners[,i] != 0, decades, sum)
+		decade.counts[, i] <- tapply(is.na(sampledSpawners[,i]) == FALSE, decades, sum)
 	}
 	
 	# Which decades have at least one estimate for each indicator stream?
@@ -243,7 +244,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 	# browser()
 	
 	# Checks ------------------------------------------------------------------
-	if (any(is.na(sampledSpawners))) stop("Expecting only non-zero escapement without missing values.")
+	# if (any(is.na(sampledSpawners))) stop("Expecting only non-zero escapement without missing values.") #Changed not sampled to NAs instead of zeroes
 	if(dim(sampledSpawners)[1] != length(years)) stop("Number of years not equal to dim sampledSpawners")
 	
 	# ----------------------------------------------------------------------------
@@ -262,7 +263,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 	if(ref.decade[1] == 8090){
 		
 		years.to.use <- which(years == 1980): which(years == 1999)
-		avgSpawners <- apply(sampledSpawners[years.to.use, ], 2, sum) / apply(sampledSpawners[years.to.use, ] != 0, 2, sum)
+		avgSpawners <- apply(sampledSpawners[years.to.use, ], 2, sum, na.rm = TRUE) / apply(is.na(sampledSpawners[years.to.use, ]) == FALSE, 2, sum)
 		
 		P <- matrix(avgSpawners / sum(avgSpawners, na.rm=TRUE), nrow=1)
 		rm(years.to.use, avgSpawners)
@@ -273,7 +274,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 		for(d in 1:length(unique(ref.decade))){ # For each reference decade
 			
 			years.to.use <- which(decadesFactor == unique(ref.decade)[d])
-			avgSpawners <- apply(sampledSpawners[years.to.use, ], 2, sum) / apply(sampledSpawners[years.to.use, ] != 0, 2, sum)
+			avgSpawners <- apply(sampledSpawners[years.to.use, ], 2, sum, na.rm = TRUE) / apply(is.na(sampledSpawners[years.to.use, ]) == FALSE, 2, sum)
 			
 			P[d, ] <- avgSpawners / sum(avgSpawners)
 			rm(years.to.use, avgSpawners)
@@ -285,7 +286,7 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 	# Step 3: Calculate Expansion Factor 1 for each year
 	# ----------------------------------------------------------------------------
 	
-	w <- (sampledSpawners != 0)
+	w <- is.na(sampledSpawners) == FALSE
 	
 	if(length(ref.decade) == 1 & ref.decade[1] == 8090){
 		ExpFac1 <- apply(matrix(rep(P, dim(w)[1]), nrow = dim(w)[1], ncol=dim(w)[2], byrow = TRUE) * w, 1, sum, na.rm=TRUE) ^ (-1)
@@ -374,8 +375,6 @@ ExpFactor1 <- function(sampledSpawners, years = 1960:2009, legacy = FALSE) {
 ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = FALSE) {
 	
 	# Checks ------------------------------------------------------------------
-	if (any(is.na(spawnersInd))) stop("NAs found in spawnersInd. Expecting only zeroes and numbers.")
-	if (any(is.na(spawnersNonInd))) stop("NAs found in spawnersNonInd. Expecting only zeroes and numbers.")
 	if(dim(spawnersInd)[1] != length(years)) stop("Number of years not equal to dim spawnersInd")
 	if(dim(spawnersNonInd)[1] != length(years)) stop("Number of years not equal to dim spawnersNonInd")
 	
@@ -389,7 +388,7 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 	decade.counts <- matrix(NA, nrow = length(unique(decadeDummyInd$decades)), ncol = dim(spawnersNonInd)[2])
 	rownames(decade.counts) <- unique(decadeDummyInd$decades)
 	for(i in 1:dim(spawnersNonInd)[2]) { #for each stream
-		decade.counts[ ,i] <- tapply(spawnersNonInd[,i] != 0, decadeDummyInd$decades, sum)
+		decade.counts[ ,i] <- tapply(is.na(spawnersNonInd[,i]) == FALSE, decadeDummyInd$decades, sum)
 	}
 	
 	atLeastOne <- apply(decade.counts > 0, 1, sum)
@@ -472,13 +471,13 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 		}
 		
 		# Average spawners in each indicator stream for the years.to.use
-		avgInd <- apply(spawnersInd[years.to.use, ], 2, sum) / apply(spawnersInd[years.to.use, ] != 0, 2, sum)
+		avgInd <- apply(spawnersInd[years.to.use, ], 2, sum, na.rm = TRUE) / apply(is.na(spawnersInd[years.to.use, ]) == FALSE, 2, sum)
 		
 		# Number of years in the years.to.use that each non-indicator stream is monitored
-		Yj <- apply(spawnersNonInd[years.to.use, ] != 0, 2, sum)
+		Yj <- apply(is.na(spawnersNonInd[years.to.use, ]) == FALSE, 2, sum)
 	
 		# Exclude non-indicator streams that weren't monitored from calculation
-		avgNonInd <- apply(spawnersNonInd[years.to.use, which(Yj > 0)], 2, sum) / Yj[which(Yj > 0)]
+		avgNonInd <- apply(spawnersNonInd[years.to.use, which(Yj > 0)], 2, sum, na.rm = TRUE) / Yj[which(Yj > 0)]
 		
 		ExpFac2 <- (sum(avgInd, na.rm=TRUE) + sum(avgNonInd, na.rm=TRUE)) / sum(avgInd, na.rm=TRUE)
 	
@@ -490,11 +489,11 @@ ExpFactor2 <- function(spawnersInd, spawnersNonInd, years = 1960:2009, legacy = 
 			years.to.use <- which(decadeDummyInd$decadesFactor == unique(ref.decade)[d])
 			
 			# Average spawners in each indicator stream for the years.to.use
-			avgInd <- apply(spawnersInd[years.to.use, ], 2, sum) / apply(spawnersInd[years.to.use, ] != 0, 2, sum)
+			avgInd <- apply(spawnersInd[years.to.use, ], 2, sum, na.rm = TRUE) / apply(is.na(spawnersInd[years.to.use, ]) == FALSE, 2, sum)
 			# Number of years in the years.to.use that each non-indicator stream is monitored
-			Yj <- apply(spawnersNonInd[years.to.use, ] != 0, 2, sum)
+			Yj <- apply(is.na(spawnersNonInd[years.to.use, ]) == FALSE, 2, sum)
 			# Exclude non-indicator streams that weren't monitored from calculation
-			avgNonInd <- apply(spawnersNonInd[years.to.use, which(Yj > 0)], 2, sum) / Yj[which(Yj > 0)]
+			avgNonInd <- apply(spawnersNonInd[years.to.use, which(Yj > 0)], 2, sum, na.rm = TRUE) / Yj[which(Yj > 0)]
 			
 			ExpFac2[d] <- (sum(avgInd) + sum(avgNonInd)) / sum(avgInd)
 		
