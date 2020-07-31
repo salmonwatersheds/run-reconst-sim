@@ -235,7 +235,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 											 a = a, # constant productivity
 											 b = b[y, ], # time-varying capacity
 											 sigma_u = simPar$sigma_u,
-											 error = upsilon[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
+											 error = upsilon[y, ],# - simPar$sigma_u^2 / 2, # Does not include lognormal bias correction
 											 tau = simPar$tau,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
@@ -271,7 +271,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 											 a = a, 
 											 b = b[y, ], 
 											 sigma_u = simPar$sigma_u,
-											 error = upsilon[y, ], #-simPar$sigma_u^2 / 2 # No lognormal bias correction
+											 error = upsilon[y, ],# - simPar$sigma_u^2 / 2, # No lognormal bias correction
 											 tau = simPar$tau,
 											 phi_last = phi[y, ],
 											 recCap = simPar$recCap, 
@@ -297,7 +297,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 	
 	obsSpawners <- spawners[(simPar$gen + 3):nYears, ] * matrix(exp(
 	qnorm(runif(simYears*nPop, 0.0001, 0.9999), 
-				rep(obs_bias, nPop), #- simPar$sigma_obs^2 / 2, # No lognormal bias correction
+				rep(obs_bias - simPar$sigma_obs^2 / 2, nPop), # Yes lognormal bias correction
 				simPar$sigma_obs)), 
 	nrow = simYears, ncol = nPop, byrow = FALSE)
 	
@@ -328,6 +328,8 @@ reconstrSim <- function(simPar, seed = NULL) {
 		z[cbind(which(nIndicatorMonitored == 0), sample(1:simPar$nIndicator, size = length(which(nIndicatorMonitored == 0)), replace = TRUE))] <- 1
 	}
 	
+	# CHange zeros to NAs for monitoring coverage to distinguish from true zeroes
+	z[which(z == 0, arr.ind = TRUE)] <- NA
 	
 	# #---
 	# # Check: proportion of all indicator and non-indicator streams with at least one year of data
@@ -342,7 +344,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 	#_____
 	# Add error to observed catch for CU
 	obsCatch <- trueCatch[(simPar$gen + 3):nYears] * exp(qnorm(runif(simYears, 0.0001, 0.9999), 
-					simPar$catch_bias,# - simPar$sigma_obs^2 / 2, # No lognormal bias correction
+					simPar$catch_bias - simPar$sigma_catch^2 / 2, # Yes lognormal bias correction
 					simPar$sigma_catch))
 	
 	#_____
@@ -363,7 +365,7 @@ reconstrSim <- function(simPar, seed = NULL) {
 	
 	# Expansion Factor I to account for indicator streams not monitored
 	dumExp1 <- ExpFactor1(sampledSpawners = sampledSpawners[, 1:simPar$nIndicator])
-	spawnersExp1 <- dumExp1[[1]] * apply(sampledSpawners[, 1:simPar$nIndicator], 1, sum)
+	spawnersExp1 <- dumExp1[[1]] * apply(sampledSpawners[, 1:simPar$nIndicator], 1, sum, na.rm = TRUE)
 		
 	# Expansion Factor II to account for non-indicator streams
 	dumExp2 <- ExpFactor2(
