@@ -1,10 +1,19 @@
+###############################################################################
+# This code runs the specific simulations presented in 
+# Peacock et al. 2020, Canadian Journal of Fisheries and Aquatic Sciences
+#
+# Evaluating the consequences of common assumptions in run reconstructions 
+# on Pacific-salmon biological status assessments
+#
+# Corresponding author: Stephanie J. Peacock <stephanie.j.peacock@gmail.com>
+###############################################################################
+
 library(mvtnorm)
 library(here)
 library(corpcor) # make.positive.definite function for Sigma
 library(data.table) # for shift function
 library(gsl) # for lambert_W0 function
 library(doParallel) # for parallelizing function application over parameters or MCMC iterations
-
 
 source("model/populationSubmodFns.R")
 source("model/obsSubmodFns.R")
@@ -83,7 +92,8 @@ for(baseCaseNum in 1:3){
 	# 2) Observed decline since mid 1980s across all systems - ppnChange_ind = -0.047 and ppnChange_nonInd = -0.667
 	# 3) Observed decline since mid 1980s over for chum
 	# 4) Observed decline since 2014 across all systems
-	r <- 2
+	
+for(r in 1:3){
 	simPar$correlPop <- c(0, 0.46, 0.9)[r]
 	
 	simPar_mon <- list(); length(simPar_mon) <- 4
@@ -138,7 +148,7 @@ for(baseCaseNum in 1:3){
 	if(baseCaseNum == 2) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseAmber.rds")
 	if(baseCaseNum == 3) saveRDS(object = out_capacityXmon2, file="workspaces/capacityXmon_delisted_baseRed.rds")
 	
-	
+	}
 	simPar$correlPop <- 0.46
 	
 	###############################################################################
@@ -225,12 +235,7 @@ for(baseCaseNum in 1:3){
 	###############################################################################
 	# Over increasing interannual variability in age-at-maturity
 	###############################################################################		
-# for(baseCaseNum in 1:3){
-		# 
-	# if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
-	# if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
-	# if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
-		
+
 	ageErr <- seq(0.2, 1.6, 0.2)
 	
 	simPar_ageErr <- makeParList(basePar = simPar, sensName = "ageErr", sensValues = ageErr)
@@ -244,17 +249,10 @@ for(baseCaseNum in 1:3){
 	if(baseCaseNum == 2) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseAmber.rds")
 	if(baseCaseNum == 3) saveRDS(object = out_ageErr2, file="workspaces/ageErr_delisted_baseRed.rds")
 	
-# } # end loop over baseCaseNum 1-3
-	
-	
+
 	###############################################################################
 	# Over decreasing correlation in recruitment deviates
 	###############################################################################
-	# for(baseCaseNum in 2:3){
-# 
-# 	if(baseCaseNum == 1) simPar <- simPar_all[simPar_all$scenario == "baseGreen",]
-# 	if(baseCaseNum == 2) simPar <- simPar_all[simPar_all$scenario == "baseAmber",]
-# 	if(baseCaseNum == 3) simPar <- simPar_all[simPar_all$scenario == "baseRed",]
 
 	correlPop <- seq(0, 0.9, 0.1)
 
@@ -268,8 +266,13 @@ for(baseCaseNum in 1:3){
 	if(baseCaseNum == 1) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseGreen.rds")
 	if(baseCaseNum == 2) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseAmber.rds")
 	if(baseCaseNum == 3) saveRDS(object = out_correlPop2, file="workspaces/correlPop_delisted_baseRed.rds")
-		
-		
+	
+	}
+
+################################################################################
+# Extra simulations added in response to reviewer
+################################################################################
+	
 	###############################################################################
 	# Over increasing variability in recruitment deviates
 	###############################################################################
