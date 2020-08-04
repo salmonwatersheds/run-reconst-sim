@@ -1,3 +1,13 @@
+###############################################################################
+# This code plots the specific figures presented in 
+# Peacock et al. 2020, Canadian Journal of Fisheries and Aquatic Sciences
+#
+# Evaluating the consequences of common assumptions in run reconstructions 
+# on Pacific-salmon biological status assessments
+#
+# Corresponding author: Stephanie J. Peacock <stephanie.j.peacock@gmail.com>
+###############################################################################
+
 library(gplots)
 statusCols <- c(g = "#8EB687", a = "#DFD98D", r = "#B66A64")
 
@@ -127,17 +137,17 @@ for(k in 1:2){
 } # end i
 
  dev.off()
+
 #------------------------------------------------------------------------------
 # Why misclassifications? RB in benchmarks
 #------------------------------------------------------------------------------
 
 delistedOut <- delistSensitivity(out_base)
 
-cases2plot <- c(1,3)
-
-quartz(width = 6, height= 3, pointsize = 9)
+cases2plot <- c(1:3)
 
 if(length(cases2plot) == 2) pdf(file = "Fig7.pdf", width = 6, height= 3, pointsize = 9)
+if(length(cases2plot) == 3) pdf(file = "FigS8.pdf", width = 6, height= 3, pointsize = 9)
 par(mfrow=c(1,2), mar=c(3, 4, 1, 1), oma=c(2,3.5,2,2))
 
 # RBs
@@ -216,6 +226,7 @@ mtext(side=1, "Case", line=3.5)
 
 legend("topright", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), bty="n", pt.cex = ptCex, pt.bg = c(statusCols['r'], 1, statusCols['g']))
 
+dev.off()
 
 #------------------------------------------------------------------------------
 # Comparing to 100% monitoring coverage of indicator, non-indicator, and both
@@ -227,7 +238,7 @@ delistedOut.all[[1]] <- readRDS("workspaces/base100Mon_delisted_baseGreen.rds")
 delistedOut.all[[2]] <- readRDS("workspaces/base100Mon_delisted_baseAmber.rds")
 delistedOut.all[[3]] <- readRDS("workspaces/base100Mon_delisted_baseRed.rds")
 
-# pdf(file = "FigS9.pdf", width = 6, height= 6.5, pointsize = 10)
+pdf(file = "FigS9.pdf", width = 6, height= 6.5, pointsize = 10)
 # quartz(width = 6, height= 6.5, pointsize = 10)
 # layout(matrix(c(1,2,3,3), nrow=2, byrow=2))
 par(mfrow=c(3,2), mar=c(3, 4, 1, 1), oma=c(0,6,5,1))
@@ -261,7 +272,7 @@ for(i in 1:3){
 	axis(side=2, at = A, labels = paste(formatC(round(A*100, 1), 0, format="f"), "%", sep=""), las=1)
 	mtext(side=2, line=4, "Relative bias")
 	
-	if(i==1) legend(3, u[4] + 0.22*(u[4]-u[3]), pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = ptCex, bg="white", xpd=NA)
+	if(i==1) legend(3, u[4] + 0.22*(u[4]-u[3]), pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = ptCex, pt.bg=c(statusCols['r'], 1, statusCols['g']), xpd=NA, bg="white")
 	
 	if(i==1) mtext(side=3, line=4, font = 2, "Spawner-recruitment")
 	mtext(side = 2, line = 6, c("High-productivity\nHCR", "Low-productivity\nModerate-harvest", "Low-productivity\nHigh-harvest")[i], font = 2)
@@ -289,9 +300,12 @@ for(i in 1:3){
 	
 	if(i==1) mtext(side=3, line=4, font = 2, "Percentile")
 	
-	if(i==1) legend(4.1, u[4] + 0.22*(u[4]-u[3]), pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[S25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), pt.cex = 0.8, bg="white", xpd=NA)
+	if(i==1) legend(4.1, u[4] + 0.22*(u[4]-u[3]), pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[S25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), pt.cex = 0.8, pt.bg=c(statusCols['r'], 1, statusCols['g']), xpd=NA, bg="white")
 
 } # end i
+
+dev.off()
+
 ###############################################################################
 # Number of indicator & non-indicator streams
 ###############################################################################
@@ -322,7 +336,7 @@ if(baseCaseNum == 1){
 par(mfrow=c(2,2), mar=c(3, 4, 1, 1), oma=c(3,2,2,0))
 
 # top: proportion wrong
-for(j in 1:2){
+for(j in 1:2){ # for SR and HS (percentile)
 	bp <- barplot(t(delistedOut$ppn[[j]]), 
 								col=c(statusCols, grey(0.8), 1), las=1, ylab = "", 
 								space=c(0.5, 0.5, 0.1, 0.5, 0.1),
@@ -413,6 +427,9 @@ mtext(side=1, outer=TRUE, "Scenario for number of indicator & non-indicator stre
 dev.off()
 
 } # end all base cases
+
+
+
 ###############################################################################
 # Capacity X Real monitoring scenarios
 ###############################################################################
@@ -862,6 +879,8 @@ mtext(side = 1, expression(paste("Percent observation bias (", italic(e)^{bar(ch
 abline(h = c(0.1), lty=3)
 
 dev.off()
+
+mis[round(mis$CatchBias, 1) == round(0.4,1), ]
 ###############################################################################
 # Changes in observation bias part-way through time series 
 ###############################################################################
@@ -1031,8 +1050,8 @@ baseValue <- 0.8
 
 #------------------------------------------------------------------------------
 # Plot
-
-quartz(width = 6.3, height= 3.6, pointsize = 10)
+pdf(file = "FigS25.pdf", width = 6.3, height= 3.6, pointsize = 10)
+# quartz(width = 6.3, height= 3.6, pointsize = 10)
 par(mfcol=c(2,3), mar=c(3, 4, 1, 1), oma=c(1,1,3,0))
 
 for(s in 1:3){ # For each base case
@@ -1075,7 +1094,7 @@ for(s in 1:3){ # For each base case
 	if(s==2) mtext(side=1, expression(paste("Interannual variability in age-at-maturity (", bar(omega), ")")), line=3)
 	
 }
-
+dev.off()
 #-----------
 # What are the numbers in the text?
 # Increase in mislcassifications from omega = 0.2 to default value of 0.8:
