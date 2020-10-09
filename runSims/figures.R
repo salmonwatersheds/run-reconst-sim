@@ -9,7 +9,12 @@
 ###############################################################################
 
 library(gplots)
-statusCols <- c(g = "#8EB687", a = "#DFD98D", r = "#B66A64")
+
+# Status colors used in the PSE:
+# statusCols <- c(g = "#8EB687", a = "#DFD98D", r = "#B66A64")
+
+# Darker red to facilitate easier distinction in BW and color-blind
+statusCols <- c(g = "#8EB687", a = "#DFD98D", r = "#9A3F3F")
 
 ###############################################################################
 # Base case simulations
@@ -434,15 +439,19 @@ dev.off()
 # Capacity X Real monitoring scenarios
 ###############################################################################
 
-plot_capacityXmon <- function(){
-	par(mfrow=c(2,2), mar=c(4, 4, 1, 1), oma=c(1,2,3,0))
+plot_capacityXmon <- function(include.legend = FALSE){
+	if(include.legend == TRUE){
+		par(mfrow=c(2,2), mar=c(4, 4, 1, 1), oma=c(1,2,3,8))
+	} else {
+		par(mfrow=c(2,2), mar=c(4, 4, 1, 1), oma=c(1,2,3,8))
+	}
 	
 	# Ppn Wrong
 	
 	
 	for(j in 1:2){
 		
-		bp <- barplot(t(delistedOut$ppn[[j]][includeIndices, ]), col=c(statusCols, grey(0.8), 1), las=1, ylab = "", border=NA, xaxs="i", yaxs="i", space=rep(c(0.6, rep(0.1, 3)), length(scenarios)))
+		bp <- barplot(t(delistedOut$ppn[[j]][includeIndices, ]), col=c(statusCols, grey(0.8), 1),  density = c(rep(NA, 3), 40, NA), las=1, ylab = "", border=NA, xaxs="i", yaxs="i", space=rep(c(0.6, rep(0.1, 3)), length(scenarios)))
 		
 		abline(h=0)
 		
@@ -459,7 +468,13 @@ plot_capacityXmon <- function(){
 		mtext(side=3, line=1.5, adj=0, c("a)", "b)")[j])
 	}
 	
-	# RBs
+	if(include.legend == TRUE){
+		# Add legend
+	legend(uBP[2]+0.08*(uBP[2]-uBP[1]), 1, title = "Missclassifications", fill = c(1, grey(0.8)), density = c(NA, 40), legend = c("Optimistic", "Pessimistic"), xpd = NA, border = NA, bty= "n", pt.cex = 4)
+	legend(uBP[2]+0.08*(uBP[2]-uBP[1]), 0.6, title = "Correct status", fill = statusCols[c('r', 'a', 'g')], legend = c("Red", "Amber", "Green"), xpd = NA, bty = "n", border = NA, pt.cex = 4)		
+	}
+	
+  # RBs
 	
 	ptCex <- 1
 	
@@ -519,7 +534,10 @@ plot_capacityXmon <- function(){
 	
 	mtext(side=3, line=1.5, adj=0, "d)")
 	
-	# legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[25])), expression(italic(S[AVG])), expression(paste(italic(S[50])))), pt.cex = ptCex, xpd=NA, ncol = 3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
+	if(include.legend == TRUE){
+		# Add legend
+		legend(u[2]+0.08*(u[2]-u[1]), u[4]-0.1*(u[4]-u[3]), title = "Benchmarks/\nMetric", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c("Lower", expression(italic(S[AVG])), "Upper"), pt.cex = ptCex, xpd=NA, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']), bty = "n")	
+	}
 	
 	mtext(side=1, outer=TRUE, "Percentage of subpopulations with severe declines in capacity", line=-1)
 
@@ -564,8 +582,8 @@ for(baseCaseNum in 1:3){
 			plot_capacityXmon()
 			dev.off()
 		} else {
-			pdf(file = "Fig8.pdf", width = 8, height = 5, pointsize = 10)
-			plot_capacityXmon()
+			pdf(file = "Fig8.pdf", width = 8.5, height = 5, pointsize = 10)
+			plot_capacityXmon(include.legend = TRUE)
 			dev.off()
 		}
 		} # end plot2 vs plot4
@@ -608,14 +626,18 @@ dev.off()
 # Observation bias
 ###############################################################################
 
-plot_obsBias <- function(){
-	par(mfrow=c(2,2), mar=c(3, 4, 1, 1), oma=c(1,2,2,0))
+plot_obsBias <- function(include.legend = FALSE){
+	if(include.legend == TRUE){
+		par(mfrow=c(2,2), mar=c(3, 4, 1, 1), oma=c(1,2,2,8))
+	} else {
+		par(mfrow=c(2,2), mar=c(3, 4, 1, 1), oma=c(1,2,2,0))
+	}
 
 	# Ppn Wrong
 	
 	for(j in 1:2){
 		
-		bp <- barplot(t(delistedOut$ppn[[j]]), col=c(statusCols, grey(0.8), 1), las=1, ylab = "", space=0.1, border=NA, xaxs="i", yaxs="i")
+		bp <- barplot(t(delistedOut$ppn[[j]]), col=c(statusCols, grey(0.8), 1), las=1, ylab = "", density = c(rep(NA, 3), 40, NA), space=0.1, border=NA, xaxs="i", yaxs="i")
 		axis(side = 1 , at = predict(lm(bp ~ sensitivityPar), newdata = data.frame(sensitivityPar = seq(-1.6, 0, 0.4))), labels=formatC(seq(-1.6, 0, 0.4), 1, format="f"))
 		
 		points(predict(lm(bp ~ sensitivityPar), newdata = data.frame(sensitivityPar = baseValue)), 1.05, pch=8, xpd=NA)
@@ -624,6 +646,11 @@ plot_obsBias <- function(){
 		mtext(side=3, line=0.5, adj=0, c("a)", "b)")[j])
 		}
 	
+	if(include.legend == TRUE){
+		# Add legend
+		legend(uBP[2]+0.08*(uBP[2]-uBP[1]), 1, title = "Missclassifications", fill = c(1, grey(0.8)), density = c(NA, 40), legend = c("Optimistic", "Pessimistic"), xpd = NA, border = NA, bty= "n", pt.cex = 4)
+		legend(uBP[2]+0.08*(uBP[2]-uBP[1]), 0.6, title = "Correct status", fill = statusCols[c('r', 'a', 'g')], legend = c("Red", "Amber", "Green"), xpd = NA, bty = "n", border = NA, pt.cex = 4)		
+	}
 	
 	# RBs
 	ptCex <- 1
@@ -672,7 +699,12 @@ plot_obsBias <- function(){
 	legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[25])), expression(italic(S[AVG])), expression(italic(S[50]))), bty="n", pt.cex = ptCex, pt.bg = c(statusCols['r'], 1, statusCols['g']))
 	
 	mtext(side=1, outer=TRUE, expression(paste("Observation bias of spawners (", bar(delta), ")")), line=0)
-
+  
+	# if(include.legend == TRUE){
+	# 	# Add legend
+	# 	legend(u[2]+0.08*(u[2]-u[1]), u[4]-0.1*(u[4]-u[3]), title = "Benchmarks/\nMetric", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c("Lower", expression(italic(S[AVG])), "Upper"), pt.cex = ptCex, xpd=NA, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']), bty = "n")	
+	# }
+	
 } # end function plot_obsBias
 
 #------------------------------------------------------------------------------
@@ -685,8 +717,8 @@ baseValue <- -0.4
 for(baseCaseNum in 1:3){
 	if(baseCaseNum == 1){
 		delistedOut <- readRDS("workspaces/obsBias_delisted_baseGreen.rds")
-		pdf(file = "Fig9.pdf", width = 6, height= 4.5, pointsize = 10)
-		plot_obsBias()
+		pdf(file = "Fig9.pdf", width = 6.5, height= 4.5, pointsize = 10)
+		plot_obsBias(include.legend = TRUE)
 		dev.off()
 	} else if(baseCaseNum == 2){
 		delistedOut <- readRDS("workspaces/obsBias_delisted_baseAmber.rds")
@@ -711,17 +743,22 @@ for(baseCaseNum in 1:3){
 # Don't need to include Percentile here because catch bias does not 
 # affect spawner estimates, only SR relationship.
 
-plot_catchBias <- function(){
-	par(mfrow=c(2,1), mar=c(3, 4, 1, 1), oma=c(1,1,2,0))
+plot_catchBias <- function(include.legend = FALSE){
+	if(include.legend == TRUE){
+		par(mfrow=c(2,1), mar=c(3, 2, 1, 1), oma=c(1,1,2,7))
+	} else {
+		par(mfrow=c(2,1), mar=c(3, 4, 1, 1), oma=c(1,1,2,0))
+	}
 # Ppn Wrong
 
 
 	j <- 1
 	# for(j in 1:2){
 		
-		bp <- barplot(t(delistedOut$ppn[[j]]), col=c(statusCols, grey(0.8), 1), las=1, ylab = "", space=0.1, border=NA, xaxs="i", yaxs="i")
+		bp <- barplot(t(delistedOut$ppn[[j]]), col=c(statusCols, grey(0.8), 1), las=1, ylab = "", density = c(rep(NA, 3), 40, NA), space=0.1, border=NA, xaxs="i", yaxs="i")
 		
 		axis(side = 1, at = bp[seq(1, length(bp), 2)], labels=formatC(seq(-1, 1, 0.4), 1, format="f"))
+		uBP <- par('usr')
 		
 		points(bp[findInterval(baseValue, sensitivityPar)], 1.05, pch=8, xpd=NA)
 		if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
@@ -729,7 +766,11 @@ plot_catchBias <- function(){
 		mtext(side=3, line=0.5, adj=0, c("a)", "b)")[j])
 	# }
 		
-	
+		if(include.legend == TRUE){
+			# Add legend
+			legend(uBP[2]+0.08*(uBP[2]-uBP[1]), 1, title = "Missclassifications", fill = c(1, grey(0.8)), density = c(NA, 40), legend = c("Optimistic", "Pessimistic"), xpd = NA, border = NA, bty= "n", pt.cex = 4)
+			legend(uBP[2]+0.08*(uBP[2]-uBP[1]), 0.6, title = "Correct status", fill = statusCols[c('r', 'a', 'g')], legend = c("Red", "Amber", "Green"), xpd = NA, bty = "n", border = NA, pt.cex = 4)		
+		}
 	# RBs
 		jit <- 0.015
 		
@@ -798,8 +839,8 @@ baseValue <- 0
 for(baseCaseNum in 1:3){
 	if(baseCaseNum == 1){
 		delistedOut <- readRDS("workspaces/catchBias_delisted_baseGreen.rds")
-		pdf(file = "Fig10.pdf", width = 3.2, height= 4.5, pointsize = 10)
-		plot_catchBias()
+		pdf(file = "Fig10.pdf", width = 3.7, height= 4.5, pointsize = 10)
+		plot_catchBias(include.legend = FALSE)
 		dev.off()
 	} else if(baseCaseNum == 2){
 		delistedOut <- readRDS("workspaces/catchBias_delisted_baseAmber.rds")
