@@ -46,7 +46,7 @@ set.seed(8293) #original seed
 # set.seed(9823)
 out_base <- runSensitivity(parList = simPar_base, nSim = 4000, nCores = 3)[[1]]
 # saveRDS(object = out_base, file = "workspaces/out_base.rds")
-# readRDS(file = "workspaces/out_base.rds")
+# out_base <- readRDS(file = "workspaces/out_base.rds")
 # Figure 6: cases2plot <- c(1, 3)
 # Figure S7: cases2plot <- c(2)
 
@@ -104,13 +104,13 @@ for(k in 1:2){
 				fnt <- 2 
 				fntcol <- "white"
 			}else if (j > h){ # Pessimistic misclassifications
-				polygon(x = c(j, j+1, j+1, j), y = 4 - c(h , h , h-1, h-1), border = NA, col = grey(0.8))
+				polygon(x = c(j, j+1, j+1, j), y = 4 - c(h , h , h-1, h-1), border = NA, col = grey(0.8), density = 40)
 				fnt <- 1
 				fntcol <- 1
 			} else { # Correct status
 				polygon(x = c(j, j+1, j+1, j), y = 4 - c(h , h , h-1, h-1), border = NA, col = statusCols[4-h])
 				fnt <- 1
-				fntcol <- 1
+				fntcol <- c("white", 1, 1)[h]
 			}
 			text(j + 0.5, 4 - h + 0.5, paste(formatC(round(statusDiffMat[h,j]/length(statusDiff)*100, 1), 1, format="f"), "%"), font=fnt, col=fntcol)
 			# text(j + 0.5, 4 - h + 0.5, statusDiffMat[h,j])
@@ -441,7 +441,7 @@ dev.off()
 
 plot_capacityXmon <- function(include.legend = FALSE){
 	if(include.legend == TRUE){
-		par(mfrow=c(2,2), mar=c(4, 4, 1, 1), oma=c(1,2,3,8))
+		par(mfrow=c(2,2), mar=c(4, 4, 3, 1), oma=c(1,2,3,8))
 	} else {
 		par(mfrow=c(2,2), mar=c(4, 4, 1, 1), oma=c(1,2,3,8))
 	}
@@ -464,8 +464,8 @@ plot_capacityXmon <- function(include.legend = FALSE){
 		axis(side=1, at=bp, labels=rep(redHab, length(scenarios)), tck=-0.02, las=lasLab, mgp=c(3, 0.5, -0.1))
 		
 		if(j == 1) mtext(side=2, line = 4, "Proportion of simulations")
-		mtext(side=3, line=3, c("Spawner-recruitment", "Percentile")[j])
-		mtext(side=3, line=1.5, adj=0, c("a)", "b)")[j])
+		mtext(side=3, line=4, c("Spawner-recruitment", "Percentile")[j])
+		mtext(side=3, line=3, adj=0, c("a)", "b)")[j])
 	}
 	
 	if(include.legend == TRUE){
@@ -503,7 +503,7 @@ plot_capacityXmon <- function(include.legend = FALSE){
 	
 	axis(side=1, at=bp, labels=rep(redHab, length(scenarios)), tck=-0.02, mgp=c(3, 0.5, 0), las=lasLab)
 	
-	mtext(side=3, line=1.5, adj=0, "c)")
+	mtext(side=3, line=3, adj=0, "c)")
 	
 	# legend("topleft", pch = c(25, 21, 24), col=c(statusCols['r'], 1, statusCols['g']), c(expression(italic(S[GEN])), expression(italic(S[AVG])), expression(paste("80%", italic(S[MSY])))), pt.cex = ptCex, xpd=NA, ncol=3, bg="white", pt.bg = c(statusCols['r'], 1, statusCols['g']))
 	
@@ -532,7 +532,7 @@ plot_capacityXmon <- function(include.legend = FALSE){
 	
 	axis(side=1, at=bp, labels=rep(redHab, length(scenarios)), tck=-0.02, las=lasLab, mgp=c(3, 0.5, 0))
 	
-	mtext(side=3, line=1.5, adj=0, "d)")
+	mtext(side=3, line=3, adj=0, "d)")
 	
 	if(include.legend == TRUE){
 		# Add legend
@@ -573,7 +573,7 @@ for(baseCaseNum in 1:3){
 				monLabels <- LETTERS[1:4]
 				lasLab <- 2 
 			} else{
-				monLabels <- c("No change in monitoring", "Observed decline in monitoring", "Chum", "Recent")
+				monLabels <- c("No change\nin monitoring", "Observed decline\nin monitoring", "Chum", "Recent")
 				lasLab <- 1
 			}
 			
@@ -582,7 +582,7 @@ for(baseCaseNum in 1:3){
 			plot_capacityXmon()
 			dev.off()
 		} else {
-			pdf(file = "Fig8.pdf", width = 8.5, height = 5, pointsize = 10)
+			pdf(file = "Fig8.pdf", width = 6.3, height = 5, pointsize = 10)
 			plot_capacityXmon(include.legend = TRUE)
 			dev.off()
 		}
